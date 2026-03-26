@@ -138,7 +138,8 @@ st.markdown("""
         background-color: #FFFFFF !important;
         border: 1px solid #CCCCCC !important;
     }
-    div[data-baseweb="select"] span {
+    div[data-baseweb="select"] span,
+    div[data-baseweb="select"] div {
         color: #111111 !important;
     }
     
