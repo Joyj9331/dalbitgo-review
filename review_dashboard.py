@@ -45,13 +45,27 @@ if not check_password():
 # 📊 대시보드 본문 (인증된 직원만 볼 수 있음)
 # ==========================================
 def load_data():
-    # 💡 누적 데이터 파일명으로 연동
-    filename = "가맹점_리뷰수집결과_누적.csv"
+    # 💡 과거 데이터 유실 방지 로직: 어제 수집한 파일과 누적 파일을 모두 불러와서 합칩니다.
+    filename_new = "가맹점_리뷰수집결과_누적.csv"
+    filename_old = "가맹점_리뷰수집결과_20260325.csv"
     
-    if os.path.exists(filename):
-        df = pd.read_csv(filename)
+    df_list = []
+    
+    # 1. 어제 파일이 있으면 리스트에 추가
+    if os.path.exists(filename_old):
+        df_list.append(pd.read_csv(filename_old))
+        
+    # 2. 오늘부터 쌓일 누적 파일이 있으면 리스트에 추가
+    if os.path.exists(filename_new):
+        df_list.append(pd.read_csv(filename_new))
+        
+    # 3. 파일이 하나라도 존재하면 합치고 중복 제거
+    if df_list:
+        df = pd.concat(df_list, ignore_index=True)
+        df.drop_duplicates(subset=['매장명', '작성일', '리뷰내용'], keep='last', inplace=True)
+        return df
     else:
-        st.warning("현재 수집된 누적 데이터 파일이 없어 샘플 화면을 보여드립니다.")
+        st.warning("현재 수집된 데이터 파일이 없어 샘플 화면을 보여드립니다.")
         data = {
             "매장명": ["파주심학산점", "강남역점", "강남역점", "홍대점", "부산서면점"],
             "작성일": ["2026-03-26", "2026-03-26", "2026-03-26", "2026-03-26", "2026-03-26"],
