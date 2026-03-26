@@ -3,6 +3,8 @@ import pandas as pd
 import plotly.express as px
 import os
 import hashlib
+import re
+from datetime import datetime, timedelta
 
 # ==========================================
 # 1. 페이지 기본 설정 및 고정형 CSS 주입
@@ -41,22 +43,6 @@ st.markdown("""
         color: #111111 !important; 
     }
     
-    /* 사이드바 여닫기 버튼 가시성 완벽 확보 */
-    [data-testid="collapsedControl"] {
-        background-color: #FFFFFF !important;
-        border: 1px solid #CCCCCC !important;
-        border-radius: 8px !important;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1) !important;
-    }
-    [data-testid="collapsedControl"] svg {
-        fill: #111111 !important;
-        color: #111111 !important;
-    }
-    [data-testid="stSidebar"] button[kind="header"] svg {
-        fill: #111111 !important;
-        color: #111111 !important;
-    }
-    
     /* 메트릭 카드 */
     div[data-testid="metric-container"] {
         background-color: #FFFFFF;
@@ -77,21 +63,24 @@ st.markdown("""
         100% { transform: scale(1); opacity: 1; filter: blur(0); }
     }
 
-    /* 로그인 컨테이너 */
+    /* 로그인 컨테이너 (다크 테마 원복 - 로고 가시성 확보) */
     .login-wrapper {
         display: flex; justify-content: center; align-items: center;
         margin-top: 10vh; margin-bottom: 2vh;
         animation: zoomInBack 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
     .login-container {
-        background-color: #FFFFFF !important; 
+        background-color: #111111 !important; 
         padding: 40px 50px; border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
         text-align: center; border-top: 5px solid #D32F2F; width: 100%;
-        border: 1px solid #EAEAEA;
+        border: 1px solid #333333;
     }
-    .brand-title { font-size: 26px; margin-top: 15px; margin-bottom: 5px; color: #111111 !important; }
-    .brand-subtitle { color: #666666 !important; font-size: 14px; margin-bottom: 30px; }
+    .login-container p, .login-container span, .login-container div, .login-container label {
+        color: #FFFFFF !important;
+    }
+    .brand-title { font-size: 26px; margin-top: 15px; margin-bottom: 5px; color: #FFFFFF !important; font-weight: 700 !important; }
+    .brand-subtitle { color: #E8B923 !important; font-size: 14px; margin-bottom: 30px; }
 
     /* 입력창 및 드롭다운 화이트 강제 고정 */
     div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {
@@ -101,19 +90,14 @@ st.markdown("""
         border: 1px solid #CCCCCC !important;
     }
     
-    /* 드롭다운 팝업 리스트 화이트 배경 강제 고정 */
-    div[data-baseweb="popover"], 
-    div[data-baseweb="popover"] > div,
-    div[data-baseweb="menu"], 
-    ul[role="listbox"] {
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
         background-color: #FFFFFF !important;
         border: 1px solid #CCCCCC !important;
     }
-    li[role="option"], li[role="option"] span, li[role="option"] div {
-        background-color: #FFFFFF !important;
+    li[role="option"] {
         color: #111111 !important;
     }
-    li[role="option"]:hover, li[role="option"]:hover span, li[role="option"]:hover div {
+    li[role="option"]:hover {
         background-color: #F4F6F8 !important;
         color: #D32F2F !important;
     }
@@ -164,7 +148,7 @@ def check_password():
             st.markdown("""
             <div class="login-wrapper">
                 <div class="login-container">
-                    <img src="https://dalbitgo.com/images/main_logo.png" style="height: 60px; object-fit: contain; filter: invert(1) hue-rotate(180deg);">
+                    <img src="https://dalbitgo.com/images/main_logo.png" style="height: 60px; object-fit: contain;">
                     <div class="brand-title">리뷰 관리 프로그램</div>
                     <div class="brand-subtitle">프리미엄 450°C 화덕 생선구이 전문점</div>
                 </div>
@@ -182,7 +166,7 @@ if not check_password():
     st.stop()
 
 # ==========================================
-# 3. 데이터 및 상태 관리 (영구 보존)
+# 3. 데이터 정제 및 상태 관리
 # ==========================================
 STATE_RESOLVED = "state_resolved.csv"
 STATE_OVERRIDDEN = "state_overridden.csv"
@@ -200,6 +184,36 @@ def add_saved_id(filename, new_id):
 def generate_id(row):
     return hashlib.md5(f"{row['매장명']}_{row['작성일']}_{row['리뷰내용']}".encode()).hexdigest()
 
+def clean_date_format(d_str):
+    """네이버의 불규칙한 날짜 포맷이나 쓰레기 데이터(1번째 방문 등)를 YYYY-MM-DD로 강제 정제합니다."""
+    d_str = str(d_str).strip()
+    
+    # YYYY년 MM월 DD일
+    m = re.search(r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일', d_str)
+    if m: return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    
+    # YYYY.MM.DD.
+    m = re.search(r'(\d{4})\.\s*(\d{1,2})\.\s*(\d{1,2})\.', d_str)
+    if m: return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    
+    # YYYY-MM-DD
+    m = re.search(r'(\d{4})-(\d{1,2})-(\d{1,2})', d_str)
+    if m: return f"{m.group(1)}-{m.group(2).zfill(2)}-{m.group(3).zfill(2)}"
+    
+    # 어제, X일 전, X시간 전 등은 오늘을 기준으로 환산 처리
+    today = datetime.now()
+    if '어제' in d_str: return (today - timedelta(days=1)).strftime('%Y-%m-%d')
+    if '일 전' in d_str:
+        try:
+            days_ago = int(re.search(r'(\d+)일 전', d_str).group(1))
+            return (today - timedelta(days=days_ago)).strftime('%Y-%m-%d')
+        except: pass
+    if '시간 전' in d_str or '분 전' in d_str:
+        return today.strftime('%Y-%m-%d')
+    
+    # '1번째 방문' 등 완전히 형태가 다른 데이터는 봇이 수집한 '오늘 날짜'로 강제 할당
+    return today.strftime('%Y-%m-%d')
+
 def load_data():
     filename = "가맹점_리뷰수집결과_누적.csv"
     if os.path.exists(filename):
@@ -207,6 +221,9 @@ def load_data():
         df.drop_duplicates(subset=['매장명', '작성일', '리뷰내용'], keep='last', inplace=True)
     else:
         df = pd.DataFrame({"매장명": ["데이터 없음"], "작성일": ["2026-03-26"], "리뷰내용": ["수집기 실행 필요"], "감정분석": ["중립"]})
+    
+    # 날짜 컬럼을 시각화에 적합하게 정제
+    df['작성일'] = df['작성일'].apply(clean_date_format)
     
     df['id'] = df.apply(generate_id, axis=1)
     overridden_ids = get_saved_ids(STATE_OVERRIDDEN)
@@ -225,17 +242,18 @@ df = load_data()
 full_store_list = load_store_list() or sorted(df['매장명'].unique().tolist())
 
 # ==========================================
-# 4. 사이드바 메뉴 (단일 메뉴 구성)
+# 4. 사이드바 메뉴
 # ==========================================
+# 다크 배경 상자를 만들어 공식 로고의 가시성을 극대화
 st.sidebar.markdown("""
-<div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
-    <img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 80%; filter: invert(1) hue-rotate(180deg);">
+<div style="background-color: #111111; padding: 15px; border-radius: 8px; text-align: center; margin-top: 10px; margin-bottom: 20px;">
+    <img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 90%;">
 </div>
 """, unsafe_allow_html=True)
 st.sidebar.markdown("<p style='text-align: center; font-size: 13px; color: #666666 !important; font-weight: 700;'>본사 통합 업무 포털</p>", unsafe_allow_html=True)
 
 st.sidebar.divider()
-st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700;'>가맹점 리뷰 관리</p>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
 
 st.sidebar.divider()
 if st.sidebar.button("최신 데이터 동기화", use_container_width=True): 
@@ -251,7 +269,7 @@ st.sidebar.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 5. 가맹점 리뷰 관리 (빅데이터 검증형 메인 화면)
+# 5. 가맹점 리뷰 관리 메인 화면
 # ==========================================
 st.markdown("<h1>가맹점 리뷰 통합 관리 <span style='font-size: 18px; color: #777;'>| Review Management</span></h1>", unsafe_allow_html=True)
 tab1, tab2 = st.tabs(["전체 브랜드 현황", "개별 매장 상세분석"])
@@ -270,7 +288,7 @@ with tab1:
                 if c1.button("조치 완료", key=f"re_{row['id']}"): 
                     add_saved_id(STATE_RESOLVED, row['id'])
                     st.rerun()
-                if c2.button("긍정 변경", key=f"ov_{row['id']}"): 
+                if c2.button("긍정 리뷰로 분류 변경", key=f"ov_{row['id']}"): 
                     add_saved_id(STATE_OVERRIDDEN, row['id'])
                     st.rerun()
     else: 
@@ -300,11 +318,11 @@ with tab2:
         if not s_df.empty:
             st.markdown(f"### [{sel_store}] 리뷰 분석 리포트")
             m1, m2, m3 = st.columns(3)
-            m1.metric("누적 전체 리뷰", f"{len(s_df)}건")
+            m1.metric("누적 수집된 전체 리뷰", f"{len(s_df)}건")
             m2.metric("긍정 평가", f"{len(s_df[s_df['감정분석'] == '긍정'])}건")
             m3.metric("부정 평가", f"{len(s_df[s_df['감정분석'] == '부정'])}건")
             
-            st.markdown("**일별 리뷰 발생 건수**")
+            st.markdown("**일별 리뷰 수집 및 발생 추이**")
             trend_df = s_df.groupby('작성일').size().reset_index(name='건수').sort_values(by='작성일')
             fig_bar = px.bar(trend_df, x='작성일', y='건수', text='건수', color_discrete_sequence=['#D32F2F'])
             fig_bar.update_traces(textposition='outside', textfont=dict(color='#111111', size=14))
@@ -313,8 +331,8 @@ with tab2:
                 paper_bgcolor="rgba(0,0,0,0)", 
                 plot_bgcolor="rgba(0,0,0,0)", 
                 font=dict(color="#111111"),
-                xaxis=dict(title="작성 일자", type='category', showgrid=False, tickfont=dict(color="#111111")),
-                yaxis=dict(title="리뷰 수(건)", showgrid=True, gridcolor="#EAEAEA", tickfont=dict(color="#111111"), dtick=1)
+                xaxis=dict(title="수집 일자", type='category', showgrid=False, tickfont=dict(color="#111111")),
+                yaxis=dict(title="수집 건수", showgrid=True, gridcolor="#EAEAEA", tickfont=dict(color="#111111"), dtick=1)
             )
             st.plotly_chart(fig_bar, use_container_width=True)
             
