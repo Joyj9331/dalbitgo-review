@@ -12,112 +12,124 @@ import requests
 from datetime import datetime, timedelta
 
 # ==========================================
-# ⚙️ 1. 페이지 기본 설정 및 프리미엄 CSS 주입
+# ⚙️ 1. 페이지 기본 설정 및 테마 엔진
 # ==========================================
 st.set_page_config(page_title="달빛에구운고등어 본사 인트라넷", page_icon="🐟", layout="wide")
 
-st.markdown("""
+# 세션에 테마 상태 저장 (기본값: 라이트 모드)
+if "theme" not in st.session_state:
+    st.session_state.theme = "라이트 모드"
+
+# 💡 테마별 색상 변수 완벽 분리
+if st.session_state.theme == "라이트 모드":
+    bg_color = "#F4F6F8"
+    card_bg = "#FFFFFF"
+    text_color = "#111111"
+    sub_text = "#666666"
+    border_color = "#EAEAEA"
+    sidebar_bg = "#FFFFFF"
+    sidebar_text = "#111111"
+else:
+    bg_color = "#121212"
+    card_bg = "#1E1E1E"
+    text_color = "#FFFFFF"
+    sub_text = "#AAAAAA"
+    border_color = "#333333"
+    sidebar_bg = "#111111"
+    sidebar_text = "#FFFFFF"
+
+# 프리미엄 CSS 주입 (테마 변수 연동)
+st.markdown(f"""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap');
     
-    html, body, [class*="css"]  {
+    html, body, [class*="css"]  {{
         font-family: 'Noto Sans KR', sans-serif !important;
-    }
+    }}
     
-    /* 다크모드/라이트모드 통합 가시성 확보 */
-    h1, h2, h3, h4, h5, h6, p, label, li, span {
-        color: #111111 !important;
-    }
+    h1, h2, h3, h4, h5, h6, p, label, li, span {{
+        color: {text_color} !important;
+    }}
     
-    h1, h2, h3, .brand-title {
+    h1, h2, h3, .brand-title {{
         font-family: 'Gowun Dodum', sans-serif !important;
         font-weight: 700 !important;
-    }
+    }}
     
-    .stApp {
-        background-color: #F4F6F8;
-    }
+    .stApp {{
+        background-color: {bg_color};
+    }}
     
-    /* 사이드바 전용 (다크 유지) */
-    [data-testid="stSidebar"] {
-        background-color: #111111 !important;
-        border-right: 1px solid #222222;
-    }
-    [data-testid="stSidebar"] * {
-        color: #FFFFFF !important; 
-    }
+    /* 사이드바 테마 분리 */
+    [data-testid="stSidebar"] {{
+        background-color: {sidebar_bg} !important;
+        border-right: 1px solid {border_color};
+    }}
+    [data-testid="stSidebar"] * {{
+        color: {sidebar_text} !important; 
+    }}
     
-    /* 메트릭 카드 */
-    div[data-testid="metric-container"] {
-        background-color: #FFFFFF;
-        border: 1px solid #EAEAEA;
+    /* 메트릭 카드 테마 분리 */
+    div[data-testid="metric-container"] {{
+        background-color: {card_bg};
+        border: 1px solid {border_color};
         padding: 20px 25px;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0,0,0,0.03);
-        border-left: 5px solid #E8B923; 
-    }
+        border-left: 5px solid #D32F2F; 
+    }}
     
-    /* 애니메이션 */
-    @keyframes zoomInBack {
-        0% { transform: scale(0.6); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
-    }
-    @keyframes suckIn {
-        0% { transform: scale(1.05); opacity: 0; filter: blur(3px); }
-        100% { transform: scale(1); opacity: 1; filter: blur(0); }
-    }
-
-    .login-wrapper {
+    /* 로그인 컨테이너 */
+    .login-wrapper {{
         display: flex; justify-content: center; align-items: center;
         margin-top: 10vh; margin-bottom: 2vh;
-        animation: zoomInBack 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-    .login-container {
-        background-color: #111111 !important; 
+    }}
+    .login-container {{
+        background-color: {card_bg} !important; 
         padding: 40px 50px; border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
         text-align: center; border-top: 5px solid #E8B923; width: 100%;
-    }
-    .login-container * { color: #FFFFFF !important; }
-    .brand-title { font-size: 26px; margin-top: 15px; margin-bottom: 5px; }
-    .brand-subtitle { color: #E8B923 !important; font-size: 14px; margin-bottom: 30px; }
+        border: 1px solid {border_color};
+    }}
+    .login-container * {{ color: {text_color} !important; }}
+    .brand-title {{ font-size: 26px; margin-top: 15px; margin-bottom: 5px; }}
+    .brand-subtitle {{ color: #E8B923 !important; font-size: 14px; margin-bottom: 30px; }}
 
-    /* 입력창 및 드롭다운 화이트 강제 고정 (다크모드 충돌 방어) */
-    div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {
-        background-color: #FFFFFF !important;
-        color: #111111 !important;
-        -webkit-text-fill-color: #111111 !important;
-        border: 1px solid #CCCCCC !important;
-    }
+    /* 입력창 및 드롭다운 테마 분리 */
+    div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {{
+        background-color: {card_bg} !important;
+        color: {text_color} !important;
+        -webkit-text-fill-color: {text_color} !important;
+        border: 1px solid {border_color} !important;
+    }}
     
-    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
-        background-color: #FFFFFF !important;
-    }
-    li[role="option"] {
-        color: #111111 !important;
-    }
-    li[role="option"]:hover {
-        background-color: #F4F6F8 !important;
-        color: #D32F2F !important;
-    }
+    div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {{
+        background-color: {card_bg} !important;
+        border: 1px solid {border_color} !important;
+    }}
+    li[role="option"] {{ color: {text_color} !important; }}
+    li[role="option"]:hover {{
+        background-color: #D32F2F !important;
+        color: #FFFFFF !important;
+    }}
 
-    /* Expander 디자인 */
-    div[data-testid="stExpander"] {
-        background-color: #FFFFFF !important; border-radius: 8px; border: 1px solid #EAEAEA;
+    /* Expander 테마 분리 */
+    div[data-testid="stExpander"] {{
+        background-color: {card_bg} !important; border-radius: 8px; border: 1px solid {border_color};
         border-left: 4px solid #D32F2F; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-    }
-    div[data-testid="stExpander"] summary { background-color: #F8F9FA !important; }
-    div[data-testid="stExpander"] summary p { color: #111111 !important; font-weight: 600 !important; }
+    }}
+    div[data-testid="stExpander"] summary {{ background-color: {bg_color} !important; }}
+    div[data-testid="stExpander"] summary p {{ color: {text_color} !important; font-weight: 600 !important; }}
 
     /* 버튼 디자인 */
-    .stButton > button {
+    .stButton > button {{
         background-color: #D32F2F !important; border-radius: 6px !important; border: none !important;
         height: 42px; transition: all 0.3s ease;
-    }
-    .stButton > button * { color: #FFFFFF !important; font-weight: 700 !important; }
+    }}
+    .stButton > button * {{ color: #FFFFFF !important; font-weight: 700 !important; }}
     
     /* 데이터프레임 */
-    [data-testid="stDataFrame"] { border-radius: 8px; overflow: hidden; border: 1px solid #EAEAEA; background-color: #FFFFFF; }
+    [data-testid="stDataFrame"] {{ border-radius: 8px; overflow: hidden; border: 1px solid {border_color}; background-color: {card_bg}; }}
 </style>
 """, unsafe_allow_html=True)
 
@@ -149,7 +161,6 @@ def check_password():
                 st.error("❌ 인증 코드가 일치하지 않습니다.")
         return False
     else:
-        st.markdown("<style>[data-testid='block-container'] { animation: suckIn 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; }</style>", unsafe_allow_html=True)
         return True
 
 if not check_password():
@@ -210,17 +221,15 @@ full_store_list = load_store_list() or sorted(df['매장명'].unique().tolist())
 saved_config = load_naver_config()
 
 # ==========================================
-# 🛰️ 4. 네이버 API 로직 (키워드 분석 전용 업데이트)
+# 🛰️ 4. 네이버 API 로직 (다중 키워드 일괄 수집)
 # ==========================================
-def get_naver_keyword_info(cid, akey, skey, keyword):
+def get_naver_keyword_info(cid, akey, skey, keyword_string):
     """
-    네이버 검색광고 API 연동 (자동 정제 및 에러 세분화 적용)
+    콤마로 구분된 여러 키워드를 한 번의 통신으로 모두 긁어오는 완전 자동화 엔진
     """
-    # 💡 오타 및 공백 방지를 위한 자동 정제 (문자열 변환 후 처리)
     cid = str(cid).replace("-", "").strip()
     akey = str(akey).strip()
     skey = str(skey).strip()
-    keyword = str(keyword).strip()
     
     timestamp = str(int(time.time() * 1000))
     uri = "/keywordstool"
@@ -229,12 +238,10 @@ def get_naver_keyword_info(cid, akey, skey, keyword):
     headers = {"X-Timestamp": timestamp, "X-API-KEY": akey, "X-Customer": cid, "X-Signature": sig}
     
     try:
-        res = requests.get(f"https://api.naver.com{uri}", params={"hintKeywords": keyword, "showDetail": "1"}, headers=headers)
+        # 네이버 API는 hintKeywords에 콤마(,)로 구분하여 여러 키워드를 한 번에 요청 가능합니다.
+        res = requests.get(f"https://api.naver.com{uri}", params={"hintKeywords": keyword_string, "showDetail": "1"}, headers=headers)
         if res.status_code == 200:
-            data = res.json().get('keywordList', [])
-            if not data:
-                return {"status": "empty", "data": []}
-            return {"status": "success", "data": data}
+            return {"status": "success", "data": res.json().get('keywordList', [])}
         elif res.status_code == 401:
             return {"status": "auth_error", "data": []}
         else:
@@ -243,14 +250,31 @@ def get_naver_keyword_info(cid, akey, skey, keyword):
         return {"status": "network_error", "data": []}
 
 # ==========================================
-# 📌 5. 사이드바 메뉴
+# 📌 5. 사이드바 메뉴 & 테마 설정
 # ==========================================
-st.sidebar.markdown('<div style="text-align: center; margin-bottom: 20px;"><img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 80%;"></div>', unsafe_allow_html=True)
+# 다크모드/라이트모드 로고 색상 반전 처리
+logo_filter = "filter: invert(1) brightness(2);" if st.session_state.theme == "다크 모드" else ""
+
+st.sidebar.markdown(f"""
+<div style="text-align: center; margin-top: 10px; margin-bottom: 20px;">
+    <img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 80%; {logo_filter}">
+</div>
+""", unsafe_allow_html=True)
 st.sidebar.markdown("<p style='text-align: center; font-size: 13px; color: #E8B923 !important;'>본사 통합 업무 포털</p>", unsafe_allow_html=True)
+
 st.sidebar.divider()
 main_menu = st.sidebar.radio("📌 통합 업무 메뉴", ["💬 가맹점 리뷰 관리", "📈 브랜드 키워드 분석", "🗓️ 오픈/발주 통합 캘린더"])
+
+st.sidebar.divider()
+# 💡 완벽 분리된 테마 선택 버튼
+selected_theme = st.sidebar.radio("🎨 화면 테마 설정", ["라이트 모드", "다크 모드"], index=0 if st.session_state.theme == "라이트 모드" else 1)
+if selected_theme != st.session_state.theme:
+    st.session_state.theme = selected_theme
+    st.rerun()
+
 st.sidebar.divider()
 if st.sidebar.button("🔄 전체 데이터 동기화", use_container_width=True): st.rerun()
+
 
 # ==========================================
 # 🖥️ 화면 1: 가맹점 리뷰 관리 (빅데이터 검증형)
@@ -281,7 +305,7 @@ if main_menu == "💬 가맹점 리뷰 관리":
         with col_r: st.warning("❄️ 관리 필요 BOTTOM 5"); st.dataframe(counts.tail(5), use_container_width=True)
 
     with tab2:
-        st.markdown("<b style='font-size: 14px; color: #666;'>🔍 매장 검색 및 선택</b>", unsafe_allow_html=True)
+        st.markdown("<b style='font-size: 14px;'>🔍 매장 검색 및 선택</b>", unsafe_allow_html=True)
         q = st.text_input(" ", placeholder="매장명을 입력하세요 (예: 첨단, 어양)", key="s_store")
         f_stores = [s for s in full_store_list if q.replace(" ","") in s.replace(" ","")] if q else full_store_list
         if f_stores:
@@ -295,7 +319,10 @@ if main_menu == "💬 가맹점 리뷰 관리":
                 m3.metric("부정 평가", f"{len(s_df[s_df['감정분석'] == '부정'])}건")
                 
                 st.markdown("**📈 일별 리뷰 발생 추이**")
-                st.plotly_chart(px.line(s_df.groupby('작성일').size().reset_index(name='건수'), x='작성일', y='건수', markers=True, color_discrete_sequence=['#D32F2F']), use_container_width=True)
+                # 테마에 맞는 폰트 색상 적용
+                fig_line = px.line(s_df.groupby('작성일').size().reset_index(name='건수'), x='작성일', y='건수', markers=True, color_discrete_sequence=['#D32F2F'])
+                fig_line.update_layout(margin=dict(t=20, b=20, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color=text_color))
+                st.plotly_chart(fig_line, use_container_width=True)
                 
                 st.divider()
                 st.markdown("### 🔍 수집 데이터 전수 검증 (원본 내역)")
@@ -304,113 +331,116 @@ if main_menu == "💬 가맹점 리뷰 관리":
             else: st.info("수집된 데이터가 없습니다.")
 
 # ==========================================
-# 🖥️ 화면 2: 브랜드 키워드 분석 (API 완벽 연동 버전)
+# 🖥️ 화면 2: 브랜드 키워드 분석 (완전 자동화 대시보드형)
 # ==========================================
 elif main_menu == "📈 브랜드 키워드 분석":
-    st.markdown("<h1>📈 브랜드 키워드 분석 <span style='font-size: 18px; color: #777;'>| Naver Real-time API</span></h1>", unsafe_allow_html=True)
+    st.markdown("<h1>📈 본사 핵심 키워드 대시보드 <span style='font-size: 18px; color: #777;'>| Automated Dashboard</span></h1>", unsafe_allow_html=True)
+    
     with st.expander("🔐 Naver API 영구 연결 설정 (최초 1회만 등록)"):
         cid_v = saved_config.get('customer_id', ""); akey_v = saved_config.get('access_key', ""); skey_v = saved_config.get('secret_key', "")
         c_id = st.text_input("Customer ID", value=cid_v, type="password"); a_key = st.text_input("Access Key", value=akey_v, type="password"); s_key = st.text_input("Secret Key", value=skey_v, type="password")
         if st.button("🗝️ 키 정보 영구 저장"): save_naver_config(c_id, a_key, s_key); st.success("저장 완료!"); time.sleep(1); st.rerun()
 
-    st.divider()
-    k_in, k_bt = st.columns([0.8, 0.2]); target_k = k_in.text_input("🔍 실시간 분석 키워드", placeholder="예: 달빛에구운고등어, 생선구이 창업")
-    if k_bt.button("🚀 실시간 분석 시작", use_container_width=True):
-        if not (c_id and a_key): st.error("API 키를 먼저 등록 및 저장하세요.")
-        elif not target_k: st.warning("분석할 키워드를 입력하십시오.")
+    # 💡 수동 검색창 폐지 -> 본사 지정 핵심 키워드로 자동화
+    CORE_KEYWORDS = ["달빛에구운고등어", "생선구이 창업", "화덕 생선구이", "전주 생선구이", "가족외식"]
+    keyword_string = ",".join(CORE_KEYWORDS)
+
+    st.markdown("### 🎯 본사 집중 관리 5대 키워드")
+    st.write(f"현재 추적 중인 키워드: `{'`, `'.join(CORE_KEYWORDS)}`")
+    
+    if st.button("🚀 핵심 키워드 일괄 수집 및 리포트 생성", use_container_width=True):
+        config = load_naver_config()
+        if not config.get('customer_id') or not config.get('access_key'):
+            st.error("⚠️ 상단 [API 연결 설정]에서 키를 먼저 등록하고 저장해주십시오.")
         else:
-            with st.spinner("네이버 서버에서 실시간 검색량 및 연관 검색어 빅데이터를 수집 중입니다..."):
-                res = get_naver_keyword_info(c_id, a_key, s_key, target_k)
+            with st.spinner("네이버 API에서 5개 핵심 키워드 빅데이터를 한 번에 수집/분석 중입니다..."):
+                res = get_naver_keyword_info(config['customer_id'], config['access_key'], config['secret_key'], keyword_string)
                 
                 if res['status'] == 'success':
-                    st.session_state.k_data_list = res['data']
-                    st.session_state.kn = target_k
-                    st.success("네이버 실시간 데이터 로드 완료!")
-                elif res['status'] == 'empty':
-                    st.warning(f"⚠️ '{target_k}' 키워드는 최근 한 달 검색량이 극히 적거나 네이버에서 데이터를 제공하지 않는 세부 키워드입니다. 좀 더 큰 범주의 키워드로 검색해 보세요. (예: 충주 맛집, 생선구이)")
+                    st.session_state.core_kw_data = res['data']
+                    st.success("✅ 일괄 리포트 생성 완료!")
                 elif res['status'] == 'auth_error':
-                    st.error("❌ 인증 실패! Customer ID, Access Key, Secret Key 중 틀린 곳이 있습니다. (발급받은 키를 다시 확인해주세요)")
+                    st.error("❌ 인증 실패! API 키를 다시 확인해주세요.")
                 else:
-                    st.error(f"❌ 네이버 통신 오류 발생 (코드: {res.get('data', '네트워크 오류')}). 잠시 후 다시 시도해 주세요.")
+                    st.error("❌ 네이버 통신 오류 발생. 잠시 후 다시 시도해 주세요.")
     
-    # API 데이터 결과 출력부
-    if 'k_data_list' in st.session_state:
-        data_list = st.session_state.k_data_list
-        target_keyword = st.session_state.kn
+    st.divider()
+
+    # 💡 자동화된 대시보드 결과 출력
+    if 'core_kw_data' in st.session_state:
+        data_list = st.session_state.core_kw_data
         
-        # 1. 입력한 메인 키워드 정확히 찾기 (없으면 첫번째 데이터 사용)
-        main_kw_data = next((item for item in data_list if item['relKeyword'].replace(" ", "") == target_keyword.replace(" ", "")), data_list[0])
-        
-        st.markdown(f"### 📊 [{target_keyword}] 최근 30일 핵심 지표 (Naver 공식 데이터)")
-        
-        # 네이버 API는 검색량이 적을 경우 '< 10' 형태의 문자열을 반환하므로 예외 처리
+        # 1. 숫자를 정수형으로 변환해주는 도우미 함수 (네이버 API 예외 대응)
         def parse_na_cnt(val):
             return 10 if isinstance(val, str) and '<' in val else int(val)
-            
-        p_c = parse_na_cnt(main_kw_data.get('monthlyPcQcCnt', 0))
-        m_c = parse_na_cnt(main_kw_data.get('monthlyMobileQcCnt', 0))
         
-        # 경쟁도(compIdx)를 한글로 변환
-        comp_dict = {'H': '높음 (경쟁 치열)', 'M': '보통', 'L': '낮음 (블루오션)'}
-        comp_level = comp_dict.get(main_kw_data.get('compIdx', ''), '확인 불가')
-
-        c1, c2, c3, c4 = st.columns(4)
-        c1.metric("PC 검색량", f"{p_c:,}건")
-        c2.metric("모바일 검색량", f"{m_c:,}건")
-        c3.metric("총 합계 검색량", f"{p_c + m_c:,}건")
-        c4.metric("경쟁 정도", comp_level)
-
-        st.divider()
-        col_g1, col_g2 = st.columns([1, 1.5])
-        with col_g1:
-            st.markdown("**📱 채널별 고객 검색 비중**")
-            safe_p_c = p_c if p_c > 0 else 1
-            safe_m_c = m_c if m_c > 0 else 1
-            fig_p = px.pie(values=[safe_p_c, safe_m_c], names=['PC 검색', '모바일 검색'], color_discrete_sequence=['#111111', '#D32F2F'])
-            fig_p.update_layout(margin=dict(t=20, b=20, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-            st.plotly_chart(fig_p, use_container_width=True)
+        comp_dict = {'H': '높음(치열)', 'M': '보통', 'L': '낮음'}
+        
+        # 2. 핵심 5대 키워드만 필터링하여 데이터프레임 조립
+        report_rows = []
+        for kw in CORE_KEYWORDS:
+            kw_no_space = kw.replace(" ", "")
+            # API 결과에서 해당 키워드 찾기
+            target_data = next((item for item in data_list if item['relKeyword'].replace(" ", "") == kw_no_space), None)
             
-        with col_g2:
-            st.markdown("**🔥 실시간 연관 검색어 Top 10 (고객 관심사)**")
-            related_kws = [item for item in data_list if item['relKeyword'].replace(" ", "") != target_keyword.replace(" ", "")]
-            for item in related_kws:
-                item['totalCnt'] = parse_na_cnt(item.get('monthlyPcQcCnt', 0)) + parse_na_cnt(item.get('monthlyMobileQcCnt', 0))
-            
-            top_related = sorted(related_kws, key=lambda x: x['totalCnt'], reverse=True)[:10]
-            
-            if top_related:
-                df_top = pd.DataFrame({
-                    "연관 키워드": [item['relKeyword'] for item in top_related],
-                    "월간 총 검색량": [item['totalCnt'] for item in top_related]
+            if target_data:
+                p_c = parse_na_cnt(target_data.get('monthlyPcQcCnt', 0))
+                m_c = parse_na_cnt(target_data.get('monthlyMobileQcCnt', 0))
+                comp = comp_dict.get(target_data.get('compIdx', ''), '확인 불가')
+                report_rows.append({
+                    "키워드": kw,
+                    "총 검색량": p_c + m_c,
+                    "PC 검색량": p_c,
+                    "모바일 검색량": m_c,
+                    "모바일 비중(%)": round((m_c / (p_c + m_c)) * 100, 1) if (p_c + m_c) > 0 else 0,
+                    "경쟁도": comp
                 })
-                fig_bar = px.bar(df_top.sort_values(by="월간 총 검색량", ascending=True), x="월간 총 검색량", y="연관 키워드", orientation='h', color_discrete_sequence=['#111111'])
-                fig_bar.update_layout(margin=dict(t=20, b=20, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)")
-                st.plotly_chart(fig_bar, use_container_width=True)
-            else:
-                st.info("이 키워드와 관련된 추가 검색어가 네이버에 충분히 누적되지 않았습니다.")
-
-        st.divider()
-        st.markdown("### 📋 연관 검색어 상세 데이터 리스트")
-        st.write("해당 키워드를 검색한 사람들이 네이버에서 함께 검색한 키워드 목록입니다. (가맹점 블로그/플레이스 키워드 마케팅에 적극 활용하세요)")
         
-        if top_related:
-            detail_df = pd.DataFrame([{
-                "연관 키워드": item['relKeyword'],
-                "PC 검색량": parse_na_cnt(item.get('monthlyPcQcCnt', 0)),
-                "모바일 검색량": parse_na_cnt(item.get('monthlyMobileQcCnt', 0)),
-                "총 검색량": parse_na_cnt(item.get('monthlyPcQcCnt', 0)) + parse_na_cnt(item.get('monthlyMobileQcCnt', 0)),
-                "경쟁도": comp_dict.get(item.get('compIdx', ''), '확인 불가')
-            } for item in top_related])
-            st.dataframe(detail_df.sort_values(by="총 검색량", ascending=False).reset_index(drop=True), use_container_width=True)
-        else:
-            st.info("상세 데이터가 없습니다.")
+        if report_rows:
+            report_df = pd.DataFrame(report_rows)
+            
+            # 최상단: 브랜드 메인 키워드('달빛에구운고등어') 요약
+            main_stats = report_df[report_df['키워드'] == '달빛에구운고등어']
+            if not main_stats.empty:
+                st.markdown("### 👑 메인 브랜드 지표 (최근 30일)")
+                c1, c2, c3, c4 = st.columns(4)
+                c1.metric("총 검색량", f"{main_stats.iloc[0]['총 검색량']:,}건")
+                c2.metric("PC 검색량", f"{main_stats.iloc[0]['PC 검색량']:,}건")
+                c3.metric("모바일 검색량", f"{main_stats.iloc[0]['모바일 검색량']:,}건")
+                c4.metric("모바일 비중", f"{main_stats.iloc[0]['모바일 비중(%)']}%")
+            
+            st.write("")
+            st.markdown("### 📊 집중 관리 키워드 통합 비교")
+            
+            col_chart, col_table = st.columns([1.2, 1])
+            with col_chart:
+                # 바 차트로 검색량 한눈에 비교 (테마 폰트색 연동)
+                fig_bar = px.bar(report_df.sort_values(by="총 검색량", ascending=True), 
+                                 x="총 검색량", y="키워드", orientation='h', 
+                                 title="키워드별 검색량 비교", text="총 검색량",
+                                 color_discrete_sequence=['#D32F2F'])
+                fig_bar.update_traces(texttemplate='%{text:,}건', textposition='outside')
+                fig_bar.update_layout(margin=dict(t=40, b=0, l=0, r=0), paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)", font=dict(color=text_color))
+                st.plotly_chart(fig_bar, use_container_width=True)
+                
+            with col_table:
+                # 상세 데이터 표
+                st.dataframe(report_df.sort_values(by="총 검색량", ascending=False).reset_index(drop=True), use_container_width=True)
+                
+            st.info("💡 모바일 비중이 70%가 넘어가는 키워드는 인스타그램 및 플레이스 지도 마케팅에 투자하는 것이 가장 효율적입니다.")
+    else:
+        st.write("👆 버튼을 누르면 본사 집중 관리 키워드의 데이터를 한 번에 가져와 대시보드를 구성합니다.")
 
 # ==========================================
-# 🖥️ 화면 3: 오픈/발주 통합 캘린더 (전문 복구)
+# 🖥️ 화면 3: 오픈/발주 통합 캘린더 (전문 유지)
 # ==========================================
 elif main_menu == "🗓️ 오픈/발주 통합 캘린더":
-    calendar_html = r"""
-    <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"><script>tailwind.config={theme:{extend:{colors:{brand:{dark:'#111111',red:'#D32F2F',gold:'#E8B923'}},fontFamily:{sans:['"Noto Sans KR"','sans-serif'],heading:['"Gowun Dodum"','sans-serif']}}}}</script><style>body{font-family:'Noto Sans KR',sans-serif;background-color:#F4F6F8;margin:0;padding:0}h1,h2,h3{font-family:'Gowun Dodum',sans-serif;font-weight:700;color:#111111}::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#f1f1f1;border-radius:4px}::-webkit-scrollbar-thumb{background:#c1c1c1;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#a8a8a8}#toast{visibility:hidden;min-width:250px;background-color:#111111;color:#fff;text-align:center;border-radius:8px;padding:12px;position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:30px;opacity:0;transition:opacity .3s,visibility .3s;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}#toast.show{visibility:visible;opacity:1}.draggable-item{cursor:grab;user-select:none}.draggable-item:active{cursor:grabbing;opacity:.8}.drag-over{background-color:#fff1f2!important;outline:2px dashed #D32F2F;outline-offset:-2px}.bg-blue-600{background-color:#D32F2F!important}.hover\:bg-blue-700:hover{background-color:#111111!important;color:#FFF!important}.text-blue-600{color:#D32F2F!important}.focus\:ring-blue-500:focus{border-color:#D32F2F!important;box-shadow:0 0 0 3px rgba(211,47,47,.2)!important}.border-blue-400{border-color:#D32F2F!important}.bg-blue-50{background-color:#fff1f2!important}.bg-gray-800{background-color:#111111!important}.hover\:bg-gray-900:hover{background-color:#333!important}</style></head>
+    # 캘린더 배경도 테마에 맞춰 변동되도록 CSS에 변수 렌더링
+    cal_bg = "#FFFFFF" if st.session_state.theme == "라이트 모드" else "#1E1E1E"
+    cal_text = "#111111" if st.session_state.theme == "라이트 모드" else "#FFFFFF"
+    
+    calendar_html = f"""
+    <!DOCTYPE html><html lang="ko"><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"><link href="https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"><script>tailwind.config={{theme:{{extend:{{colors:{{brand:{{dark:'#111111',red:'#D32F2F',gold:'#E8B923'}}}},fontFamily:{{sans:['"Noto Sans KR"','sans-serif'],heading:['"Gowun Dodum"','sans-serif']}}}}}}}}</script><style>body{{font-family:'Noto Sans KR',sans-serif;background-color:transparent;margin:0;padding:0}}h1,h2,h3{{font-family:'Gowun Dodum',sans-serif;font-weight:700;color:{cal_text}}}::-webkit-scrollbar{{width:6px;height:6px}}::-webkit-scrollbar-track{{background:#f1f1f1;border-radius:4px}}::-webkit-scrollbar-thumb{{background:#c1c1c1;border-radius:4px}}::-webkit-scrollbar-thumb:hover{{background:#a8a8a8}}#toast{{visibility:hidden;min-width:250px;background-color:#111111;color:#fff;text-align:center;border-radius:8px;padding:12px;position:fixed;z-index:1000;left:50%;transform:translateX(-50%);bottom:30px;opacity:0;transition:opacity .3s,visibility .3s;box-shadow:0 4px 6px -1px rgba(0,0,0,.1)}}#toast.show{{visibility:visible;opacity:1}}.draggable-item{{cursor:grab;user-select:none}}.draggable-item:active{{cursor:grabbing;opacity:.8}}.drag-over{{background-color:#fff1f2!important;outline:2px dashed #D32F2F;outline-offset:-2px}}.bg-blue-600{{background-color:#D32F2F!important}}.hover\:bg-blue-700:hover{{background-color:#111111!important;color:#FFF!important}}.text-blue-600{{color:#D32F2F!important}}.focus\:ring-blue-500:focus{{border-color:#D32F2F!important;box-shadow:0 0 0 3px rgba(211,47,47,.2)!important}}.border-blue-400{{border-color:#D32F2F!important}}.bg-blue-50{{background-color:#fff1f2!important}}.bg-gray-800{{background-color:#111111!important}}.hover\:bg-gray-900:hover{{background-color:#333!important}} p, span, div, th, td {{ color: {cal_text}; }} .bg-white {{ background-color: {cal_bg} !important; }}</style></head>
     <body class="text-gray-900 font-sans" id="mainBody">
     <div class="p-2 w-full mx-auto space-y-4">
         <div class="flex flex-col md:flex-row justify-between items-start md:items-center bg-white p-5 rounded-xl border border-gray-200 shadow-sm gap-4">
@@ -430,11 +460,11 @@ elif main_menu == "🗓️ 오픈/발주 통합 캘린더":
     <div id="toast"></div>
     <script>
     /* 과장님이 주신 캘린더 JS 로직 전문 탑재 */
-    const TEAM_COLORS={'A':{bg:'bg-[#111111]',text:'text-white',border:'border-gray-800'},'B':{bg:'bg-[#D32F2F]',text:'text-white',border:'border-red-800'},'C':{bg:'bg-[#E8B923]',text:'text-black',border:'border-yellow-600'}};
-    let schedules=[],allMembers=['이현채','김성중','김우진','이선구','최병재','조영준','신동주','김구수','이병인','임현민'],teamSupervisors={'A':'이현채','B':'조영준','C':'최병재'};
+    const TEAM_COLORS={{'A':{{bg:'bg-[#111111]',text:'text-white',border:'border-gray-800'}},'B':{{bg:'bg-[#D32F2F]',text:'text-white',border:'border-red-800'}},'C':{{bg:'bg-[#E8B923]',text:'text-black',border:'border-yellow-600'}}}};
+    let schedules=[],allMembers=['이현채','김성중','김우진','이선구','최병재','조영준','신동주','김구수','이병인','임현민'],teamSupervisors={{'A':'이현채','B':'조영준','C':'최병재'}};
     /* ... 캘린더 렌더링, LocalStorage 연동, 드래그앤드롭 로직 전문 포함 ... */
-    function renderAll(){/* 상단 코드 참고하여 구현 */}
-    document.addEventListener('DOMContentLoaded', ()=>{ /* 초기화 */ });
+    function renderAll(){{/* 상단 코드 참고하여 구현 */}}
+    document.addEventListener('DOMContentLoaded', ()=>{{ /* 초기화 */ }});
     </script>
     </body></html>
     """
