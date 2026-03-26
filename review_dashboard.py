@@ -7,7 +7,7 @@ import re
 from datetime import datetime, timedelta
 
 # ==========================================
-# 1. 페이지 기본 설정 및 프레스티지 CSS 주입
+# 1. 페이지 기본 설정 및 미니멀/플랫 CSS 주입
 # ==========================================
 st.set_page_config(page_title="달빛에구운고등어 본사 인트라넷", layout="wide")
 
@@ -31,135 +31,92 @@ st.markdown("""
     
     /* 전체 배경 라이트 그레이 */
     .stApp {
-        background-color: #F4F6F8;
+        background-color: #F8F9FA;
     }
     
     /* 사이드바 순백색 강제 고정 */
     [data-testid="stSidebar"] {
         background-color: #FFFFFF !important;
-        border-right: 1px solid #EAEAEA;
+        border-right: 1px solid #E0E0E0;
     }
     [data-testid="stSidebar"] * {
         color: #111111 !important; 
     }
     
-    /* 🌟 매끄러운 등장 애니메이션 (Fade In Up) */
-    @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(20px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Streamlit 메인 블록들에 애니메이션 순차 적용 */
-    .block-container > div {
-        animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
-    }
-    
-    /* 🌟 반응형 메트릭 카드 (마우스 호버 시 떠오르는 효과) */
+    /* 🌟 정통 실무형 플랫 디자인 메트릭 카드 */
     div[data-testid="metric-container"] {
         background-color: #FFFFFF;
-        border: 1px solid #EAEAEA;
+        border: 1px solid #E0E0E0;
         padding: 20px 25px;
-        border-radius: 12px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.02);
-        border-left: 5px solid #D32F2F; 
-        transition: all 0.3s ease-in-out;
-    }
-    div[data-testid="metric-container"]:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 20px rgba(211,47,47,0.1);
-        border-left: 5px solid #111111;
+        border-radius: 4px;
+        box-shadow: none;
+        border-left: 4px solid #D32F2F; 
     }
     
-    /* 로그인 컨테이너 애니메이션 및 라운딩 */
-    @keyframes zoomInBack {
-        0% { transform: scale(0.6); opacity: 0; }
-        100% { transform: scale(1); opacity: 1; }
-    }
+    /* 로그인 컨테이너 간결화 */
     .login-wrapper {
         display: flex; justify-content: center; align-items: center;
         margin-top: 10vh; margin-bottom: 2vh;
-        animation: zoomInBack 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
     }
     .login-container {
         background-color: #FFFFFF !important; 
-        padding: 40px 50px; border-radius: 16px;
-        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
-        text-align: center; border-top: 5px solid #D32F2F; width: 100%;
-        border: 1px solid #EAEAEA;
-        transition: all 0.3s ease;
-    }
-    .login-container:hover {
-        box-shadow: 0 15px 50px rgba(0,0,0,0.12);
+        padding: 40px 50px; border-radius: 4px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        text-align: center; border-top: 4px solid #D32F2F; width: 100%;
+        border: 1px solid #E0E0E0;
     }
     .login-container p, .login-container span, .login-container div, .login-container label {
         color: #111111 !important;
     }
-    .brand-title { font-size: 26px; margin-top: 15px; margin-bottom: 5px; color: #111111 !important; font-weight: 700 !important; }
-    .brand-subtitle { color: #666666 !important; font-size: 14px; margin-bottom: 30px; }
+    .brand-title { font-size: 24px; margin-top: 15px; margin-bottom: 5px; color: #111111 !important; font-weight: 700 !important; }
+    .brand-subtitle { color: #666666 !important; font-size: 13px; margin-bottom: 30px; }
 
-    /* 입력창 디자인 (포커스 시 스무스한 그림자) */
+    /* 입력창 및 드롭다운 플랫 디자인 */
     div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {
         background-color: #FFFFFF !important;
         color: #111111 !important;
         -webkit-text-fill-color: #111111 !important;
         border: 1px solid #CCCCCC !important;
-        border-radius: 8px !important;
-        transition: all 0.3s ease;
+        border-radius: 4px !important;
     }
     div[data-baseweb="input"] > div:focus-within, .stTextInput input:focus {
-        border-color: #D32F2F !important;
-        box-shadow: 0 0 0 2px rgba(211,47,47,0.2) !important;
+        border-color: #111111 !important;
+        box-shadow: none !important;
     }
     
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
         background-color: #FFFFFF !important;
         border: 1px solid #CCCCCC !important;
-        border-radius: 8px !important;
-        overflow: hidden;
+        border-radius: 4px !important;
     }
-    li[role="option"] { color: #111111 !important; transition: all 0.2s ease; }
-    li[role="option"]:hover { background-color: #F4F6F8 !important; color: #D32F2F !important; padding-left: 20px; }
+    li[role="option"] { color: #111111 !important; }
+    li[role="option"]:hover { background-color: #F8F9FA !important; color: #D32F2F !important; }
 
-    /* 🌟 반응형 Expander 디자인 */
+    /* 🌟 미니멀 Expander 디자인 */
     div[data-testid="stExpander"] {
-        background-color: #FFFFFF !important; border-radius: 12px; border: 1px solid #EAEAEA;
-        border-left: 4px solid #D32F2F; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
-        transition: all 0.3s ease;
-    }
-    div[data-testid="stExpander"]:hover {
-        box-shadow: 0 6px 12px rgba(0,0,0,0.06);
-        border-left: 4px solid #111111;
+        background-color: #FFFFFF !important; border-radius: 4px; border: 1px solid #E0E0E0;
+        border-left: 3px solid #D32F2F; box-shadow: none;
     }
     div[data-testid="stExpander"] summary { background-color: transparent !important; }
     div[data-testid="stExpander"] summary p { color: #111111 !important; font-weight: 600 !important; }
 
-    /* 🌟 프리미엄 버튼 디자인 */
+    /* 🌟 실무형 버튼 디자인 (애니메이션 제거, 깔끔함 유지) */
     .stButton > button {
-        background-color: #D32F2F !important; border-radius: 8px !important; border: none !important;
-        height: 45px; transition: all 0.3s ease;
-        box-shadow: 0 4px 6px rgba(211,47,47,0.2);
+        background-color: #111111 !important; border-radius: 4px !important; border: none !important;
+        height: 42px;
     }
-    .stButton > button * { color: #FFFFFF !important; font-weight: 700 !important; transition: all 0.3s ease; }
+    .stButton > button * { color: #FFFFFF !important; font-weight: 700 !important; }
     .stButton > button:hover {
-        background-color: #111111 !important; /* 호버 시 블랙으로 변환하여 세련됨 강조 */
-        box-shadow: 0 6px 15px rgba(17,17,17,0.25);
-        transform: translateY(-2px);
-    }
-    .stButton > button:active {
-        transform: translateY(1px);
-        box-shadow: 0 2px 4px rgba(17,17,17,0.2);
+        background-color: #333333 !important;
     }
     
-    /* 데이터프레임 라운딩 */
-    [data-testid="stDataFrame"] { border-radius: 12px; overflow: hidden; border: 1px solid #EAEAEA; background-color: #FFFFFF; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    /* 데이터프레임 각진 디자인 */
+    [data-testid="stDataFrame"] { border-radius: 4px; overflow: hidden; border: 1px solid #E0E0E0; background-color: #FFFFFF; }
     
     /* 커스텀 탭 디자인 */
-    button[data-baseweb="tab"] { background-color: transparent !important; transition: all 0.3s ease; }
+    button[data-baseweb="tab"] { background-color: transparent !important; }
     button[data-baseweb="tab"] > div[data-testid="stMarkdownContainer"] > p {
-        font-size: 16px !important; font-weight: 700 !important; color: #888888 !important; transition: all 0.3s ease;
-    }
-    button[data-baseweb="tab"]:hover > div[data-testid="stMarkdownContainer"] > p {
-        color: #111111 !important;
+        font-size: 15px !important; font-weight: 700 !important; color: #888888 !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] > div[data-testid="stMarkdownContainer"] > p {
         color: #D32F2F !important;
@@ -184,8 +141,8 @@ def check_password():
             st.markdown("""
             <div class="login-wrapper">
                 <div class="login-container">
-                    <div style="background-color: #111111; padding: 20px; border-radius: 12px; margin-bottom: 10px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
-                        <img src="https://dalbitgo.com/images/main_logo.png" style="height: 55px; object-fit: contain;">
+                    <div style="background-color: #111111; padding: 20px; border-radius: 4px; margin-bottom: 15px;">
+                        <img src="https://dalbitgo.com/images/main_logo.png" style="height: 50px; object-fit: contain;">
                     </div>
                     <div class="brand-title">본사 통합 관리 시스템</div>
                     <div class="brand-subtitle">프리미엄 450°C 화덕 생선구이 전문점</div>
@@ -269,8 +226,8 @@ full_store_list = load_store_list() or sorted(df['매장명'].unique().tolist())
 # 4. 사이드바 메뉴
 # ==========================================
 st.sidebar.markdown("""
-<!-- 로고 뒷배경에만 먹색(#111111) 박스 적용 및 그림자 효과로 깊이감 부여 -->
-<div style="background-color: #111111; padding: 15px; border-radius: 12px; text-align: center; margin-top: 10px; margin-bottom: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+<!-- 로고 뒷배경에만 먹색(#111111) 박스 적용 (라운딩 최소화) -->
+<div style="background-color: #111111; padding: 15px; border-radius: 4px; text-align: center; margin-top: 10px; margin-bottom: 25px;">
     <img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 90%;">
 </div>
 """, unsafe_allow_html=True)
@@ -280,7 +237,8 @@ st.sidebar.divider()
 st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 
-if st.sidebar.button("최신 데이터 동기화", use_container_width=True): 
+# 직관적인 버튼 명칭으로 변경
+if st.sidebar.button("🔄 최신 리뷰 불러오기", use_container_width=True): 
     st.rerun()
 
 st.sidebar.markdown("""
@@ -353,10 +311,10 @@ with tab2:
             # 고급스러운 바 차트 디자인 적용
             fig_bar = px.bar(trend_df, x='작성일', y='건수', text='건수')
             fig_bar.update_traces(
-                marker_color='#D32F2F', 
+                marker_color='#111111', # 바 차트도 먹색으로 변경하여 차분함 유지
                 textposition='outside', 
                 textfont=dict(color='#111111', size=13, family="Noto Sans KR"),
-                hoverlabel=dict(bgcolor="#111111", font_size=13, font_family="Noto Sans KR")
+                hoverlabel=dict(bgcolor="#D32F2F", font_size=13, font_family="Noto Sans KR")
             )
             fig_bar.update_layout(
                 margin=dict(t=20, b=20, l=0, r=0), 
