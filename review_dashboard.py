@@ -100,7 +100,7 @@ st.markdown("""
     div[data-testid="stExpander"] summary { background-color: transparent !important; }
     div[data-testid="stExpander"] summary p { color: #111111 !important; font-weight: 600 !important; }
 
-    /* 🌟 실무형 버튼 디자인 (애니메이션 제거, 깔끔함 유지) */
+    /* 🌟 실무형 버튼 디자인 */
     .stButton > button {
         background-color: #111111 !important; border-radius: 4px !important; border: none !important;
         height: 42px;
@@ -226,7 +226,6 @@ full_store_list = load_store_list() or sorted(df['매장명'].unique().tolist())
 # 4. 사이드바 메뉴
 # ==========================================
 st.sidebar.markdown("""
-<!-- 로고 뒷배경에만 먹색(#111111) 박스 적용 (라운딩 최소화) -->
 <div style="background-color: #111111; padding: 15px; border-radius: 4px; text-align: center; margin-top: 10px; margin-bottom: 25px;">
     <img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 90%;">
 </div>
@@ -237,7 +236,6 @@ st.sidebar.divider()
 st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 
-# 직관적인 버튼 명칭으로 변경
 if st.sidebar.button("🔄 최신 리뷰 불러오기", use_container_width=True): 
     st.rerun()
 
@@ -257,25 +255,31 @@ st.markdown("<h1 style='margin-bottom: 30px;'>가맹점 리뷰 통합 관리 <sp
 tab1, tab2 = st.tabs(["전체 브랜드 현황", "개별 매장 상세분석"])
 
 with tab1:
-    st.markdown("<h3 style='margin-top: 25px; margin-bottom: 15px;'>즉각 조치 요망 매장 리스트</h3>", unsafe_allow_html=True)
-    resolved_ids = get_saved_ids(STATE_RESOLVED)
-    active_neg = df[(df['감정분석'] == '부정') & (~df['id'].isin(resolved_ids))]
+    st.markdown("<h3 style='margin-top: 25px; margin-bottom: 15px;'>🚨 즉각 조치 요망 매장 리스트 (영구 보존)</h3>", unsafe_allow_html=True)
     
-    if not active_neg.empty:
-        st.error(f"총 {len(active_neg)}건의 미조치 부정 리뷰가 있습니다.")
+    total_neg_df = df[df['감정분석'] == '부정']
+    resolved_ids = get_saved_ids(STATE_RESOLVED)
+    
+    # 💡 [족쇄 로직] 조치 완료되지 않은 과거 모든 리뷰 추출 및 최신순 정렬
+    active_neg = total_neg_df[~total_neg_df['id'].isin(resolved_ids)].sort_values(by='작성일', ascending=False)
+    
+    if total_neg_df.empty:
+        st.success("🎉 누적된 수집 리뷰 중 '부정(불만)' 키워드가 감지된 내역이 단 한 건도 없습니다!")
+    elif not active_neg.empty:
+        st.error(f"⚠️ 총 {len(active_neg)}건의 미조치 부정 리뷰가 남아있습니다. 반드시 점주 확인 후 [조치 완료]를 눌러 전산에서 소거해 주십시오.")
         for _, row in active_neg.iterrows():
             with st.expander(f"[{row['매장명']}] {row['작성일']} | {row['리뷰내용'][:35]}..."):
                 st.write(f"**상세 내용:** {row['리뷰내용']}")
-                st.write("") # 여백
+                st.write("") 
                 c1, c2, _ = st.columns([1.5, 1.5, 3])
-                if c1.button("조치 완료", key=f"re_{row['id']}", use_container_width=True): 
+                if c1.button("✅ 해피콜 조치 완료 (목록에서 삭제)", key=f"re_{row['id']}", use_container_width=True): 
                     add_saved_id(STATE_RESOLVED, row['id'])
                     st.rerun()
-                if c2.button("긍정 분류로 변경", key=f"ov_{row['id']}", use_container_width=True): 
+                if c2.button("🌟 긍정 분류로 예외 처리", key=f"ov_{row['id']}", use_container_width=True): 
                     add_saved_id(STATE_OVERRIDDEN, row['id'])
                     st.rerun()
     else: 
-        st.success("모든 부정 리뷰에 대한 조치가 완료되었습니다.")
+        st.success(f"✅ 발견되었던 부정 리뷰 {len(total_neg_df)}건에 대한 본사 해피콜 및 전산 조치가 100% 완료되었습니다.")
     
     st.divider()
     st.markdown("<h3 style='margin-bottom: 15px;'>매장별 누적 리뷰 랭킹</h3>", unsafe_allow_html=True)
@@ -300,18 +304,25 @@ with tab2:
         
         if not s_df.empty:
             st.markdown(f"<h3 style='margin-top: 30px; margin-bottom: 20px;'>[{sel_store}] 리뷰 분석 리포트</h3>", unsafe_allow_html=True)
-            m1, m2, m3 = st.columns(3)
-            m1.metric("누적 수집된 전체 리뷰", f"{len(s_df)}건")
-            m2.metric("긍정 평가", f"{len(s_df[s_df['감정분석'] == '긍정'])}건")
-            m3.metric("부정 평가", f"{len(s_df[s_df['감정분석'] == '부정'])}건")
             
-            st.markdown("<div style='margin-top: 35px; margin-bottom: 10px;'><b>일별 리뷰 수집 및 발생 추이</b></div>", unsafe_allow_html=True)
+            # 💡 [핵심] 일평균 작성량 계산 로직 (총 리뷰 수 / 리뷰가 작성된 고유 일수)
+            unique_days = s_df['작성일'].nunique()
+            daily_average = round(len(s_df) / unique_days, 1) if unique_days > 0 else 0
+            
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("누적 수집 리뷰", f"{len(s_df)}건")
+            m2.metric("일평균 작성량", f"{daily_average}건")
+            m3.metric("긍정 평가", f"{len(s_df[s_df['감정분석'] == '긍정'])}건")
+            m4.metric("부정 평가", f"{len(s_df[s_df['감정분석'] == '부정'])}건")
+            
+            st.markdown("<div style='margin-top: 35px; margin-bottom: 10px;'><b>일자별 리뷰 작성 추이</b></div>", unsafe_allow_html=True)
+            
+            # 💡 고객이 작성한 실제 '작성일' 기준으로 데이터 그룹핑
             trend_df = s_df.groupby('작성일').size().reset_index(name='건수').sort_values(by='작성일')
             
-            # 고급스러운 바 차트 디자인 적용
             fig_bar = px.bar(trend_df, x='작성일', y='건수', text='건수')
             fig_bar.update_traces(
-                marker_color='#111111', # 바 차트도 먹색으로 변경하여 차분함 유지
+                marker_color='#111111',
                 textposition='outside', 
                 textfont=dict(color='#111111', size=13, family="Noto Sans KR"),
                 hoverlabel=dict(bgcolor="#D32F2F", font_size=13, font_family="Noto Sans KR")
@@ -321,8 +332,8 @@ with tab2:
                 paper_bgcolor="rgba(0,0,0,0)", 
                 plot_bgcolor="rgba(0,0,0,0)", 
                 font=dict(color="#111111", family="Noto Sans KR"),
-                xaxis=dict(title="수집 일자", type='category', showgrid=False, tickfont=dict(color="#666666")),
-                yaxis=dict(title="수집 건수", showgrid=True, gridcolor="#EAEAEA", tickfont=dict(color="#666666"), dtick=1),
+                xaxis=dict(title="리뷰 작성 일자", type='category', showgrid=False, tickfont=dict(color="#666666")),
+                yaxis=dict(title="작성 건수(건)", showgrid=True, gridcolor="#EAEAEA", tickfont=dict(color="#666666"), dtick=1),
                 hovermode="x unified"
             )
             st.plotly_chart(fig_bar, use_container_width=True)
