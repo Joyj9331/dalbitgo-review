@@ -6,12 +6,12 @@ import os
 import hashlib
 import re
 from datetime import datetime, timedelta
-
+ 
 # ==========================================
 # 1. 페이지 기본 설정 및 고정형 CSS 주입
 # ==========================================
 st.set_page_config(page_title="달빛에구운고등어 본사 인트라넷", layout="wide")
-
+ 
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Gowun+Dodum&family=Noto+Sans+KR:wght@400;500;700&display=swap');
@@ -62,7 +62,7 @@ st.markdown("""
         0% { transform: scale(1.05); opacity: 0; filter: blur(3px); }
         100% { transform: scale(1); opacity: 1; filter: blur(0); }
     }
-
+ 
     .login-wrapper {
         display: flex; justify-content: center; align-items: center;
         margin-top: 10vh; margin-bottom: 2vh;
@@ -80,7 +80,7 @@ st.markdown("""
     }
     .brand-title { font-size: 26px; margin-top: 15px; margin-bottom: 5px; color: #FFFFFF !important; font-weight: 700 !important; }
     .brand-subtitle { color: #E8B923 !important; font-size: 14px; margin-bottom: 30px; }
-
+ 
     /* 로고 폴백용 텍스트 스타일 */
     .logo-fallback {
         font-family: 'Gowun Dodum', sans-serif;
@@ -90,7 +90,7 @@ st.markdown("""
         letter-spacing: 1px;
         padding: 8px 0;
     }
-
+ 
     div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {
         background-color: #FFFFFF !important;
         color: #111111 !important;
@@ -104,14 +104,14 @@ st.markdown("""
     }
     li[role="option"] { color: #111111 !important; }
     li[role="option"]:hover { background-color: #F4F6F8 !important; color: #D32F2F !important; }
-
+ 
     div[data-testid="stExpander"] {
         background-color: #FFFFFF !important; border-radius: 8px; border: 1px solid #EAEAEA;
         border-left: 4px solid #D32F2F; box-shadow: 0 2px 5px rgba(0,0,0,0.02);
     }
     div[data-testid="stExpander"] summary { background-color: #F8F9FA !important; }
     div[data-testid="stExpander"] summary p { color: #111111 !important; font-weight: 600 !important; }
-
+ 
     .stButton > button {
         background-color: #D32F2F !important; border-radius: 6px !important; border: none !important;
         height: 42px; transition: all 0.3s ease;
@@ -127,7 +127,7 @@ st.markdown("""
     button[data-baseweb="tab"][aria-selected="true"] > div[data-testid="stMarkdownContainer"] > p {
         color: #D32F2F !important;
     }
-
+ 
     /* 사이드바 버튼 색상 */
     [data-testid="stSidebar"] .stButton > button {
         background-color: #D32F2F !important;
@@ -137,12 +137,12 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # ==========================================
 # 로고 렌더링 헬퍼 (이미지 실패 시 텍스트 폴백)
 # ==========================================
 LOGO_URL = "https://dalbitgo.com/images/main_logo.png"
-
+ 
 def logo_html(height=60, dark_bg=True):
     """
     다크 배경용 로고 HTML을 반환합니다.
@@ -157,7 +157,7 @@ def logo_html(height=60, dark_bg=True):
         <div class="logo-fallback" style="display:none;">🐟 달빛에 구운 고등어</div>
     </div>
     """
-
+ 
 # ==========================================
 # 2. 보안 로그인 시스템
 # ==========================================
@@ -168,7 +168,7 @@ def check_password():
             del st.session_state["password"]  
         else:
             st.session_state["password_correct"] = False
-
+ 
     if "password_correct" not in st.session_state or not st.session_state["password_correct"]:
         col1, col2, col3 = st.columns([1.5, 1, 1.5])
         with col2:
@@ -190,29 +190,29 @@ def check_password():
     else:
         st.markdown("<style>[data-testid='block-container'] { animation: suckIn 0.6s cubic-bezier(0.2, 0.8, 1) forwards; }</style>", unsafe_allow_html=True)
         return True
-
+ 
 if not check_password():
     st.stop()
-
+ 
 # ==========================================
 # 3. 데이터 정제 및 상태 관리
 # ==========================================
 STATE_RESOLVED = "state_resolved.csv"
 STATE_OVERRIDDEN = "state_overridden.csv"
-
+ 
 def get_saved_ids(filename):
     if os.path.exists(filename): return pd.read_csv(filename)['id'].astype(str).tolist()
     return []
-
+ 
 def add_saved_id(filename, new_id):
     ids = get_saved_ids(filename)
     if str(new_id) not in ids:
         ids.append(str(new_id))
         pd.DataFrame({'id': ids}).to_csv(filename, index=False)
-
+ 
 def generate_id(row):
     return hashlib.md5(f"{row['매장명']}_{row['작성일']}_{row['리뷰내용']}".encode()).hexdigest()
-
+ 
 def clean_date_format(d_str):
     d_str = str(d_str).strip()
     m = re.search(r'(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일', d_str)
@@ -231,7 +231,7 @@ def clean_date_format(d_str):
     if '시간 전' in d_str or '분 전' in d_str:
         return today.strftime('%Y-%m-%d')
     return today.strftime('%Y-%m-%d')
-
+ 
 def load_data():
     filename = "가맹점_리뷰수집결과_누적.csv"
     if os.path.exists(filename):
@@ -244,7 +244,7 @@ def load_data():
     overridden_ids = get_saved_ids(STATE_OVERRIDDEN)
     df.loc[df['id'].isin(overridden_ids), '감정분석'] = '긍정'
     return df
-
+ 
 def load_store_list():
     if os.path.exists("가맹점_리뷰링크.xlsx"):
         try:
@@ -252,10 +252,10 @@ def load_store_list():
             return sorted(sdf['매장명'].dropna().unique().tolist())
         except: pass
     return []
-
+ 
 df = load_data()
 full_store_list = load_store_list() or sorted(df['매장명'].unique().tolist())
-
+ 
 # ==========================================
 # 4. 사이드바 메뉴 (다크 테마, 로고 폴백 적용)
 # ==========================================
@@ -272,7 +272,7 @@ st.sidebar.markdown(
 st.sidebar.divider()
 if st.sidebar.button("최신 데이터 동기화", use_container_width=True):
     st.rerun()
-
+ 
 st.sidebar.markdown("""
 <div style='font-size:11px; color:#888888; text-align:center; line-height:1.7; margin-top:50px;'>
     <b style='color:#AAAAAA !important;'>(주)새모양에프앤비</b><br>
@@ -281,7 +281,7 @@ st.sidebar.markdown("""
     COPYRIGHT © 달빛에 구운 고등어
 </div>
 """, unsafe_allow_html=True)
-
+ 
 # ==========================================
 # 5. 그래프 공통 레이아웃 설정
 # ==========================================
@@ -308,7 +308,7 @@ CHART_LAYOUT = dict(
     ),
     bargap=0.35,
 )
-
+ 
 def make_bar_chart(trend_df):
     """
     감정별 색상 구분 막대 그래프를 생성합니다.
@@ -329,7 +329,7 @@ def make_bar_chart(trend_df):
             text="건수",
             color_discrete_sequence=["#D32F2F"],
         )
-
+ 
     fig.update_traces(
         textposition="outside",
         textfont=dict(color="#111111", size=13, family="Noto Sans KR"),
@@ -337,13 +337,13 @@ def make_bar_chart(trend_df):
     )
     fig.update_layout(**CHART_LAYOUT)
     return fig
-
+ 
 # ==========================================
 # 6. 가맹점 리뷰 관리 메인 화면
 # ==========================================
 st.markdown("<h1>가맹점 리뷰 통합 관리 <span style='font-size:18px; color:#777;'>| Review Management</span></h1>", unsafe_allow_html=True)
 tab1, tab2 = st.tabs(["전체 브랜드 현황", "개별 매장 상세분석"])
-
+ 
 with tab1:
     st.markdown("<h3 style='margin-top:20px;'>즉각 조치 요망 매장 리스트</h3>", unsafe_allow_html=True)
     resolved_ids = get_saved_ids(STATE_RESOLVED)
@@ -375,25 +375,25 @@ with tab1:
     with col_r:
         st.warning("리뷰 관리 필요 하위 5개 매장")
         st.dataframe(counts.tail(5), use_container_width=True)
-
+ 
 with tab2:
     st.markdown("<b style='font-size:14px;'>매장 검색 및 선택</b>", unsafe_allow_html=True)
     q = st.text_input(" ", placeholder="매장명을 입력하세요 (예: 첨단, 어양)", key="s_store")
     f_stores = [s for s in full_store_list if q.replace(" ", "") in s.replace(" ", "")] if q else full_store_list
-
+ 
     if f_stores:
         sel_store = st.selectbox("조회할 매장을 선택하십시오", f_stores)
         s_df = df[df['매장명'] == sel_store].copy()
-
+ 
         if not s_df.empty:
             st.markdown(f"### [{sel_store}] 리뷰 분석 리포트")
             m1, m2, m3 = st.columns(3)
             m1.metric("누적 수집된 전체 리뷰", f"{len(s_df)}건")
             m2.metric("긍정 평가", f"{len(s_df[s_df['감정분석'] == '긍정'])}건")
             m3.metric("부정 평가", f"{len(s_df[s_df['감정분석'] == '부정'])}건")
-
+ 
             st.markdown("**일별 리뷰 수집 및 발생 추이**")
-
+ 
             # 감정분석 포함 집계로 색상 구분 가능하게
             trend_df = (
                 s_df.groupby(['작성일', '감정분석'])
@@ -403,7 +403,7 @@ with tab2:
             )
             fig = make_bar_chart(trend_df)
             st.plotly_chart(fig, use_container_width=True)
-
+ 
             st.divider()
             st.markdown("### 수집 데이터 전수 검증 (원본 내역)")
             st.write("자동 수집된 원본 리뷰 텍스트입니다. 인공지능 분류 내역을 확인해 보십시오.")
