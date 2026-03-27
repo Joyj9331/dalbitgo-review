@@ -11,8 +11,9 @@ from datetime import datetime, timedelta
 # ==========================================
 st.set_page_config(page_title="달빛에구운고등어 본사 인트라넷", layout="wide")
 
+# 💡 누구든 처음 입장 시 '다크 모드'로 시작하도록 기본값 변경
 if "theme" not in st.session_state:
-    st.session_state.theme = "light"
+    st.session_state.theme = "dark"
 
 # ==========================================
 # 2. 공통 CSS (폰트, 사이드바, 공통 디자인)
@@ -41,21 +42,6 @@ st.markdown("""
         color: #FFFFFF !important; 
     }
     
-    /* 사이드바 하얀색 테마 버튼 */
-    [data-testid="stSidebar"] .stButton > button {
-        background-color: #FFFFFF !important;
-        border-radius: 4px !important;
-        border: none !important;
-        height: 42px;
-    }
-    [data-testid="stSidebar"] .stButton > button * {
-        color: #111111 !important;
-        font-weight: 700 !important;
-    }
-    [data-testid="stSidebar"] .stButton > button:hover {
-        background-color: #E0E0E0 !important;
-    }
-
     /* 드롭다운 리스트 블랙 고정 */
     div[data-baseweb="popover"], div[data-baseweb="menu"], ul[role="listbox"] {
         background-color: #111111 !important;
@@ -78,6 +64,25 @@ st.markdown("""
     /* 폼 컨테이너 클리어 및 컬럼 간격 최소화 */
     [data-testid="stForm"] { border: none !important; padding: 0 !important; background-color: transparent !important; }
     div[data-testid="column"] { padding: 0 4px !important; }
+
+    /* 🌟 우측 상단 원형 테마 버튼 공통 CSS */
+    .top-theme-btn .stButton > button {
+        border-radius: 50% !important;
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        float: right;
+        margin-top: 15px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.3s ease;
+    }
+    .top-theme-btn .stButton > button * {
+        color: #888888 !important;
+        font-size: 16px !important;
+        line-height: 1;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -115,6 +120,10 @@ if st.session_state.theme == "dark":
         .main-btn .stButton > button { background-color: #333333 !important; }
         .main-btn .stButton > button *, .main-btn .stButton > button p { color: #FFFFFF !important; }
         .main-btn .stButton > button:hover { background-color: #555555 !important; }
+
+        /* 다크모드 상단 테마 버튼 */
+        .top-theme-btn .stButton > button { background-color: #222222 !important; border: 1px solid #444444 !important; }
+        .top-theme-btn .stButton > button:hover { background-color: #444444 !important; }
     </style>
     """, unsafe_allow_html=True)
 else:
@@ -148,6 +157,10 @@ else:
         .main-btn .stButton > button { background-color: #111111 !important; }
         .main-btn .stButton > button *, .main-btn .stButton > button p { color: #FFFFFF !important; }
         .main-btn .stButton > button:hover { background-color: #333333 !important; }
+
+        /* 라이트모드 상단 테마 버튼 */
+        .top-theme-btn .stButton > button { background-color: #FFFFFF !important; border: 1px solid #CCCCCC !important; }
+        .top-theme-btn .stButton > button:hover { background-color: #E0E0E0 !important; }
     </style>
     """, unsafe_allow_html=True)
 
@@ -177,7 +190,7 @@ def check_password():
             display: block;
         }
         
-        /* 🌟 [핵심 수술] 폼 폭 강제 고정 및 컬럼 간섭 제거 */
+        /* 폼 폭 강제 고정 및 컬럼 간섭 제거 */
         [data-testid="stForm"] {
             max-width: 280px !important;
             margin: 0 auto !important;
@@ -185,7 +198,7 @@ def check_password():
             border: none !important;
         }
         
-        /* 🌟 [핵심 수술] 컬럼을 수직 중앙으로 강제 정렬하여 삐뚤어짐 방지 */
+        /* 컬럼을 수직 중앙으로 강제 정렬하여 삐뚤어짐 방지 */
         [data-testid="column"] {
             padding: 0 4px !important;
             display: flex;
@@ -193,7 +206,7 @@ def check_password():
             justify-content: center;
         }
 
-        /* 🌟 입력창 높이 고정 및 세련된 디자인 */
+        /* 입력창 높이 고정 및 세련된 디자인 */
         div[data-baseweb="input"] > div {
             background-color: #111111 !important;
             border: 1px solid #444444 !important;
@@ -218,22 +231,22 @@ def check_password():
             color: #FFFFFF !important;
         }
         
-        /* 🌟 [핵심 수술] 버튼 시인성 대폭 강화 및 높이 완벽 일치 */
+        /* 버튼 시인성 대폭 강화 및 높이 완벽 일치 */
         [data-testid="stFormSubmitButton"] {
             margin: 0 !important;
             padding: 0 !important;
         }
         [data-testid="stFormSubmitButton"] > button {
-            background-color: #444444 !important; /* 눈에 확 띄는 짙은 회색 */
+            background-color: #444444 !important;
             border: 1px solid #666666 !important;
             border-radius: 4px !important;
-            height: 42px !important; /* 입력창과 동일한 42px */
+            height: 42px !important;
             width: 100% !important;
             padding: 0 !important;
             transition: all 0.2s ease;
         }
         [data-testid="stFormSubmitButton"] > button p {
-            color: #FFFFFF !important; /* 새하얀 글씨 */
+            color: #FFFFFF !important;
             font-size: 11px !important;
             font-weight: 700 !important;
             letter-spacing: 1px;
@@ -253,7 +266,7 @@ def check_password():
         # 애니메이션 로고
         st.markdown('<img src="https://dalbitgo.com/images/main_logo.png" class="animated-logo">', unsafe_allow_html=True)
         
-        # 🌟 폼 내부 레이아웃 (Streamlit 기본 컬럼을 활용하되 CSS로 억제)
+        # 폼 내부 레이아웃
         with st.form("login_form", clear_on_submit=True):
             c_in, c_btn = st.columns([2.5, 1]) # 가로 비율 설정
             with c_in:
@@ -323,28 +336,6 @@ full_store_list = load_store_list() or (sorted(df['매장명'].unique().tolist()
 # 6. 사이드바 메뉴 
 # ==========================================
 st.sidebar.markdown("""
-<style>
-    /* 🌟 완벽한 원형 테마 버튼 CSS */
-    .circle-theme-btn .stButton > button {
-        border-radius: 50% !important;
-        width: 40px !important;
-        height: 40px !important;
-        background-color: #222222 !important;
-        border: 1px solid #444444 !important;
-        padding: 0 !important;
-        margin: 0 auto;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }
-    .circle-theme-btn .stButton > button * {
-        color: #888888 !important;
-        font-size: 16px !important;
-    }
-    .circle-theme-btn .stButton > button:hover {
-        background-color: #444444 !important;
-    }
-</style>
 <div style="padding: 10px; text-align: center; margin-top: 20px; margin-bottom: 30px;">
     <img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 90%;">
 </div>
@@ -353,19 +344,8 @@ st.sidebar.markdown("""
 st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 
-# 🌟 이모지, 글씨 싹 빼고 완벽한 동그라미(원형) 버튼 중앙 배치
-st.sidebar.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-c1, c2, c3 = st.sidebar.columns([1, 1, 1])
-with c2:
-    st.markdown('<div class="circle-theme-btn">', unsafe_allow_html=True)
-    theme_icon = "○" if st.session_state.theme == "light" else "●"
-    if st.button(theme_icon, help="다크/라이트 모드 변경"):
-        st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # 🌟 겹침(오버랩) 버그 원천 차단: absolute 걷어내고 여백(스페이서)으로 무조건 가장 하단으로 밀어냄
-st.sidebar.markdown("<div style='height: 45vh;'></div>", unsafe_allow_html=True)
+st.sidebar.markdown("<div style='height: 60vh;'></div>", unsafe_allow_html=True)
 st.sidebar.markdown("""
 <div style='text-align: center; font-size: 11px; line-height: 1.6; color: #666666 !important; border-top: 1px solid #333333; padding-top: 15px;'>
     <b>(주)새모양에프앤비</b><br>
@@ -381,7 +361,18 @@ st.sidebar.markdown("""
 # 로그인 후 간섭을 막기 위한 메인 컨텐츠 래퍼 적용
 st.markdown('<div class="main-content">', unsafe_allow_html=True)
 
-st.markdown("<h1 style='margin-bottom: 30px;'>가맹점 리뷰 통합 관리 <span style='font-size: 18px; color: #888 !important; font-weight: 500;'>| Review Management</span></h1>", unsafe_allow_html=True)
+# 💡 상단 타이틀과 우측 테마 전환 버튼 배치
+col_title, col_theme = st.columns([10, 1])
+with col_title:
+    st.markdown("<h1 style='margin-bottom: 30px;'>가맹점 리뷰 통합 관리 <span style='font-size: 18px; color: #888 !important; font-weight: 500;'>| Review Management</span></h1>", unsafe_allow_html=True)
+with col_theme:
+    st.markdown('<div class="top-theme-btn">', unsafe_allow_html=True)
+    theme_icon = "○" if st.session_state.theme == "light" else "●"
+    if st.button(theme_icon, key="theme_btn", help="다크/라이트 모드 변경"):
+        st.session_state.theme = "light" if st.session_state.theme == "dark" else "dark"
+        st.rerun()
+    st.markdown('</div>', unsafe_allow_html=True)
+
 tab1, tab2 = st.tabs(["전체 브랜드 현황", "개별 매장 상세분석"])
 
 with tab1:
