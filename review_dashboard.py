@@ -94,11 +94,12 @@ if st.session_state.theme == "dark":
             padding: 20px 25px; border-radius: 4px; border-left: 4px solid #D32F2F !important; 
         }
         
-        div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {
+        /* 메인화면 폼 요소 (로그인 화면 간섭 방지) */
+        .main-content div[data-baseweb="select"] > div, .main-content div[data-baseweb="input"] > div, .main-content .stTextInput input {
             background-color: #222222 !important; color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important; border: 1px solid #444444 !important; border-radius: 4px !important;
         }
-        div[data-baseweb="input"] > div:focus-within, .stTextInput input:focus {
+        .main-content div[data-baseweb="input"] > div:focus-within, .main-content .stTextInput input:focus {
             border-color: #888888 !important;
         }
         
@@ -126,11 +127,12 @@ else:
             padding: 20px 25px; border-radius: 4px; border-left: 4px solid #D32F2F !important; 
         }
         
-        div[data-baseweb="select"] > div, div[data-baseweb="input"] > div, .stTextInput input {
+        /* 메인화면 폼 요소 (로그인 화면 간섭 방지) */
+        .main-content div[data-baseweb="select"] > div, .main-content div[data-baseweb="input"] > div, .main-content .stTextInput input {
             background-color: #FFFFFF !important; color: #111111 !important;
             -webkit-text-fill-color: #111111 !important; border: 1px solid #CCCCCC !important; border-radius: 4px !important;
         }
-        div[data-baseweb="input"] > div:focus-within, .stTextInput input:focus {
+        .main-content div[data-baseweb="input"] > div:focus-within, .main-content .stTextInput input:focus {
             border-color: #111111 !important;
         }
         
@@ -150,13 +152,13 @@ else:
 
 
 # ==========================================
-# 4. 보안 로그인 시스템
+# 4. 보안 로그인 시스템 (풀스크린 블랙 / 초소형 컴팩트 인풋)
 # ==========================================
 def check_password():
     if "password_correct" in st.session_state and st.session_state["password_correct"]:
         return True
 
-    # 로그인 화면 전용 전체화면 블랙 CSS
+    # 로그인 화면 전용 독자적 CSS (메인 화면 간섭 원천 차단)
     st.markdown("""
     <style>
         .stApp { background-color: #000000 !important; }
@@ -170,81 +172,85 @@ def check_password():
         .animated-logo {
             animation: logoZoomIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             max-width: 320px; 
-            margin: 0 auto 20px auto;
+            margin: 0 auto 30px auto;
             display: block;
         }
         
-        /* 🌟 [요청2,3] 인풋 박스와 버튼 폭 대폭 축소 (120px) */
-        .login-box {
-            max-width: 10px;
-            margin: 0 auto;
-        }
-        .login-box .stTextInput input {
+        /* 🌟 [핵심] 로그인 화면 전용 입력창 다크화 및 컴팩트 스타일링 */
+        .login-form-container div[data-baseweb="input"] > div {
             background-color: #111111 !important;
+            border: 1px solid #444444 !important;
+            border-radius: 4px !important;
+        }
+        .login-form-container input {
+            background-color: transparent !important;
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
-            border: 1px solid #333333 !important;
-            text-align: center;
+            text-align: center !important;
             font-size: 13px !important;
             letter-spacing: 2px;
-            padding: 8px;
+            padding: 10px !important;
         }
-        .login-box .stTextInput input:focus {
-            border-color: #666666 !important;
+        .login-form-container div[data-baseweb="input"] > div:focus-within {
+            border-color: #888888 !important;
         }
         
-        div[data-testid="stTextInput"] svg {
+        /* 패스워드 보기 눈동자 아이콘 화이트 처리 */
+        .login-form-container svg {
             fill: #FFFFFF !important;
             color: #FFFFFF !important;
         }
         
-        .login-btn {
-            max-width: 120px;
-            margin: 0 auto;
+        /* 🌟 [핵심] 시인성 강화된 컴팩트 시스템 로그인 버튼 */
+        .login-form-container .stButton > button {
+            background-color: #333333 !important;
+            border: 1px solid #555555 !important;
+            border-radius: 4px !important;
+            height: 40px !important;
+            width: 100% !important;
+            transition: all 0.3s ease;
         }
-        .login-btn .stButton > button {
-            background-color: #222222 !important;
-            border: 1px solid #444444 !important;
-            height: 38px !important;
-        }
-        /* 🌟 [요청4] SYSTEM LOGIN 텍스트 화이트 지정 */
-        .login-btn .stButton > button * {
+        .login-form-container .stButton > button * {
             color: #FFFFFF !important;
             font-size: 11px !important;
             font-weight: 500 !important;
             letter-spacing: 1px;
         }
-        .login-btn .stButton > button:hover {
-            background-color: #444444 !important;
+        .login-form-container .stButton > button:hover {
+            background-color: #555555 !important;
+            border-color: #777777 !important;
         }
     </style>
     """, unsafe_allow_html=True)
 
+    # 화면 중앙 배치를 위한 최상위 컬럼
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<div style='margin-top: 25vh; text-align: center;'>", unsafe_allow_html=True)
         
-        # 🌟 [요청1] 부제목(프리미엄 450도...) 삭제, 로고만 압도적으로 배치
+        # 애니메이션 로고
         st.markdown('<img src="https://dalbitgo.com/images/main_logo.png" class="animated-logo">', unsafe_allow_html=True)
-        st.markdown("<div style='height: 30px;'></div>", unsafe_allow_html=True)
         
+        # 🌟 폼 내부를 다시 3등분하여 입력창과 버튼 가로 길이를 극단적으로 축소
         with st.form("login_form", clear_on_submit=True):
-            st.markdown('<div class="login-box">', unsafe_allow_html=True)
-            pwd = st.text_input("auth", type="password", placeholder="인증코드", label_visibility="collapsed")
+            st.markdown('<div class="login-form-container">', unsafe_allow_html=True)
+            
+            # 입력창을 중앙에 조그맣게 배치
+            inner_c1, inner_c2, inner_c3 = st.columns([1, 1.5, 1])
+            with inner_c2:
+                pwd = st.text_input("auth", type="password", placeholder="인증코드", label_visibility="collapsed")
+                st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+                submit = st.form_submit_button("SYSTEM LOGIN")
+                
+                if submit:
+                    if pwd == "51015":
+                        st.session_state["password_correct"] = True
+                        st.rerun()
+                    elif pwd:
+                        st.error("인증 코드가 일치하지 않습니다.")
+                        
             st.markdown('</div>', unsafe_allow_html=True)
             
-            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-            
-            st.markdown('<div class="login-btn">', unsafe_allow_html=True)
-            submit = st.form_submit_button("SYSTEM LOGIN", use_container_width=True)
-            st.markdown('</div>', unsafe_allow_html=True)
-            
-            if submit:
-                if pwd == "51015":
-                    st.session_state["password_correct"] = True
-                    st.rerun()
-                elif pwd:
-                    st.error("인증 코드가 일치하지 않습니다.")
         st.markdown("</div>", unsafe_allow_html=True)
         
     return False
@@ -308,13 +314,12 @@ st.sidebar.markdown("""
 st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 
-# 🌟 [요청6] 다크/라이트 모드 스위치 버튼 추가
 theme_btn_text = "🌙 다크 모드로 전환" if st.session_state.theme == "light" else "☀️ 라이트 모드로 전환"
 if st.sidebar.button(theme_btn_text, use_container_width=True):
     st.session_state.theme = "dark" if st.session_state.theme == "light" else "light"
     st.rerun()
 
-# 🌟 [요청3] 회사 정보 하단 고정
+# 회사 정보 하단 고정
 st.sidebar.markdown("""
 <div style='position: absolute; bottom: 30px; width: 100%; text-align: center; font-size: 11px; line-height: 1.6; color: #666666 !important;'>
     <b>(주)새모양에프앤비</b><br>
@@ -327,6 +332,9 @@ st.sidebar.markdown("""
 # ==========================================
 # 7. 가맹점 리뷰 관리 메인 화면
 # ==========================================
+# 로그인 후 간섭을 막기 위한 메인 컨텐츠 래퍼 적용
+st.markdown('<div class="main-content">', unsafe_allow_html=True)
+
 st.markdown("<h1 style='margin-bottom: 30px;'>가맹점 리뷰 통합 관리 <span style='font-size: 18px; color: #888 !important; font-weight: 500;'>| Review Management</span></h1>", unsafe_allow_html=True)
 tab1, tab2 = st.tabs(["전체 브랜드 현황", "개별 매장 상세분석"])
 
@@ -414,7 +422,6 @@ with tab2:
                 
                 trend_df = s_df.groupby('작성일').size().reset_index(name='건수').sort_values(by='작성일')
                 
-                # 🌟 다크모드 대응 차트 컬러 셋팅
                 chart_font_color = "#E0E0E0" if st.session_state.theme == "dark" else "#111111"
                 chart_grid_color = "#333333" if st.session_state.theme == "dark" else "#EAEAEA"
                 chart_bar_color = "#FFFFFF" if st.session_state.theme == "dark" else "#111111"
@@ -445,3 +452,5 @@ with tab2:
                 st.info("선택하신 매장의 수집된 데이터가 없습니다.")
         else:
             st.info("전체 리뷰 데이터가 아직 수집되지 않았습니다.")
+
+st.markdown('</div>', unsafe_allow_html=True)
