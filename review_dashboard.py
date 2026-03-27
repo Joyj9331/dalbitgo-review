@@ -117,7 +117,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. 보안 로그인 시스템 (풀스크린 블랙 / 이모지 삭제 / 압도적 로고)
+# 2. 보안 로그인 시스템 (풀스크린 블랙 / 로고 모션 / 콤팩트 인풋)
 # ==========================================
 def check_password():
     if "password_correct" in st.session_state and st.session_state["password_correct"]:
@@ -130,26 +130,57 @@ def check_password():
         [data-testid="stHeader"] { display: none !important; }
         [data-testid="stSidebar"] { display: none !important; }
         
-        /* 로그인 인풋 박스 전문성 강화 */
+        /* 🌟 [요청1] 로고 페이드인 & 스케일 애니메이션 */
+        @keyframes logoZoomIn {
+            0% { transform: scale(3.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animated-logo {
+            animation: logoZoomIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            max-width: 320px; 
+            margin: 0 auto 20px auto;
+            display: block;
+        }
+        
+        /* 🌟 [요청2] 인증코드 폼 사이즈 축소 및 중앙 정렬 */
+        .login-box {
+            max-width: 260px;
+            margin: 0 auto;
+        }
         .login-box .stTextInput input {
             background-color: #111111 !important;
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
             border: 1px solid #333333 !important;
             text-align: center;
-            font-size: 16px;
+            font-size: 14px !important;
             letter-spacing: 2px;
-            padding: 12px;
+            padding: 8px;
         }
         .login-box .stTextInput input:focus {
             border-color: #666666 !important;
         }
-        /* 로그인 전용 버튼 */
+        
+        /* 🌟 [요청2] 패스워드 보기/숨기기 눈동자 아이콘 하얀색 처리 (검은 배경 대비) */
+        div[data-testid="stTextInput"] svg {
+            fill: #FFFFFF !important;
+            color: #FFFFFF !important;
+        }
+        
+        /* 🌟 [요청2] 시스템 로그인 버튼 축소 및 하얀색 텍스트 지정 */
+        .login-btn {
+            max-width: 140px;
+            margin: 0 auto;
+        }
         .login-btn .stButton > button {
             background-color: #222222 !important;
             border: 1px solid #444444 !important;
+            height: 38px !important;
+        }
+        .login-btn .stButton > button * {
             color: #FFFFFF !important;
-            height: 50px;
+            font-size: 12px !important;
+            font-weight: 500 !important;
             letter-spacing: 1px;
         }
         .login-btn .stButton > button:hover {
@@ -161,17 +192,16 @@ def check_password():
     col1, col2, col3 = st.columns([1, 1.2, 1])
     with col2:
         st.markdown("<div style='margin-top: 22vh; text-align: center;'>", unsafe_allow_html=True)
-        # 로고 사이즈 대폭 확장 (압도적인 무게감)
-        st.markdown('<img src="https://dalbitgo.com/images/main_logo.png" style="max-width: 320px; margin-bottom: 20px;">', unsafe_allow_html=True)
-        st.markdown('<div style="color: #555555 !important; font-size: 14px; margin-bottom: 50px; letter-spacing: 1px;">프리미엄 450°C 화덕 생선구이 전문점</div>', unsafe_allow_html=True)
+        # 애니메이션이 적용된 로고 호출
+        st.markdown('<img src="https://dalbitgo.com/images/main_logo.png" class="animated-logo">', unsafe_allow_html=True)
+        st.markdown('<div style="color: #555555 !important; font-size: 13px; margin-bottom: 50px; letter-spacing: 1px;">프리미엄 450°C 화덕 생선구이 전문점</div>', unsafe_allow_html=True)
         
-        # 간결하고 무거운 톤의 로그인 폼
         with st.form("login_form", clear_on_submit=True):
             st.markdown('<div class="login-box">', unsafe_allow_html=True)
             pwd = st.text_input("auth", type="password", placeholder="인증코드를 입력하세요", label_visibility="collapsed")
             st.markdown('</div>', unsafe_allow_html=True)
             
-            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+            st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
             
             st.markdown('<div class="login-btn">', unsafe_allow_html=True)
             submit = st.form_submit_button("SYSTEM LOGIN", use_container_width=True)
@@ -235,7 +265,7 @@ df = load_data()
 full_store_list = load_store_list() or (sorted(df['매장명'].unique().tolist()) if not df.empty else [])
 
 # ==========================================
-# 4. 사이드바 메뉴 (불필요 텍스트, 버튼 삭제)
+# 4. 사이드바 메뉴 (푸터 최하단 고정)
 # ==========================================
 st.sidebar.markdown("""
 <div style="padding: 10px; text-align: center; margin-top: 20px; margin-bottom: 40px;">
@@ -246,8 +276,9 @@ st.sidebar.markdown("""
 st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 
+# 🌟 [요청3] 회사 정보를 사이드바 가장 아래쪽으로 배치
 st.sidebar.markdown("""
-<div style='font-size: 11px; text-align: center; line-height: 1.6; margin-top: 80px; color: #666666 !important;'>
+<div style='margin-top: 50vh; text-align: center; font-size: 11px; line-height: 1.6; color: #666666 !important;'>
     <b>(주)새모양에프앤비</b><br>
     사업자등록번호: 418-81-51015<br>
     전북특별자치도 전주시 덕진구 사거리길49<br>
@@ -372,7 +403,7 @@ with tab2:
         else:
             st.info("전체 리뷰 데이터가 아직 수집되지 않았습니다.")
 
-# 💡 [요청7] 최신 데이터 동기화 버튼을 화면 우측 최하단에 작게 은닉
+# 최신 데이터 동기화 버튼을 화면 우측 최하단에 작게 은닉
 st.markdown("<div style='margin-top: 100px;'></div>", unsafe_allow_html=True)
 col_empty, col_sync = st.columns([10, 1])
 with col_sync:
