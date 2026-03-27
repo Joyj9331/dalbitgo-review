@@ -153,13 +153,13 @@ else:
 
 
 # ==========================================
-# 4. 보안 로그인 시스템 (풀스크린 블랙 / 가로 일렬 배치 폼)
+# 4. 보안 로그인 시스템 (풀스크린 블랙 / 완벽한 가로 정렬 폼)
 # ==========================================
 def check_password():
     if "password_correct" in st.session_state and st.session_state["password_correct"]:
         return True
 
-    # 로그인 화면 전용 독자적 CSS
+    # 🌟 로그인 화면 전용 독자적 CSS (버그 원천 차단)
     st.markdown("""
     <style>
         .stApp { background-color: #000000 !important; }
@@ -172,62 +172,76 @@ def check_password():
         }
         .animated-logo {
             animation: logoZoomIn 1.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            max-width: 320px; 
+            max-width: 280px; 
             margin: 0 auto 30px auto;
             display: block;
         }
         
-        /* 🌟 [핵심 수정] 로그인 폼 가로 폭 축소 */
-        .login-form-container {
-            max-width: 250px; /* 입력창과 버튼이 한 줄에 들어갈 컴팩트한 폭 */
-            margin: 0 auto;
+        /* 🌟 [핵심 수술] 폼 폭 강제 고정 및 컬럼 간섭 제거 */
+        [data-testid="stForm"] {
+            max-width: 280px !important;
+            margin: 0 auto !important;
+            background-color: transparent !important;
+            border: none !important;
         }
         
-        /* 입력창 디자인 */
-        .login-form-container div[data-baseweb="input"] > div {
-            background-color: #111111 !important;
-            border: 1px solid #333333 !important;
-            border-radius: 4px !important;
+        /* 🌟 [핵심 수술] 컬럼을 수직 중앙으로 강제 정렬하여 삐뚤어짐 방지 */
+        [data-testid="column"] {
+            padding: 0 4px !important;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
-        .login-form-container input {
-            background-color: transparent !important;
+
+        /* 🌟 입력창 높이 고정 및 세련된 디자인 */
+        div[data-baseweb="input"] > div {
+            background-color: #111111 !important;
+            border: 1px solid #444444 !important;
+            border-radius: 4px !important;
+            height: 42px !important;
+        }
+        input[type="password"] {
             color: #FFFFFF !important;
             -webkit-text-fill-color: #FFFFFF !important;
             text-align: center !important;
-            font-size: 12px !important;
+            font-size: 13px !important;
             letter-spacing: 2px;
-            padding: 8px !important;
+            background-color: transparent !important;
         }
-        .login-form-container div[data-baseweb="input"] > div:focus-within {
+        div[data-baseweb="input"] > div:focus-within {
             border-color: #888888 !important;
         }
         
-        /* 패스워드 보기 눈동자 아이콘 화이트 처리 */
-        .login-form-container svg {
+        /* 패스워드 눈동자 아이콘 하얀색 */
+        div[data-testid="stTextInput"] svg {
             fill: #FFFFFF !important;
             color: #FFFFFF !important;
         }
         
-        /* 🌟 [핵심 수정] 입력창 옆에 찰싹 붙는 미니 로그인 버튼 */
-        .login-btn-col .stButton > button {
-            background-color: #222222 !important;
-            border: 1px solid #444444 !important;
+        /* 🌟 [핵심 수술] 버튼 시인성 대폭 강화 및 높이 완벽 일치 */
+        [data-testid="stFormSubmitButton"] {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        [data-testid="stFormSubmitButton"] > button {
+            background-color: #444444 !important; /* 눈에 확 띄는 짙은 회색 */
+            border: 1px solid #666666 !important;
             border-radius: 4px !important;
-            height: 38px !important; /* 입력창과 동일한 높이 */
+            height: 42px !important; /* 입력창과 동일한 42px */
             width: 100% !important;
             padding: 0 !important;
             transition: all 0.2s ease;
         }
-        /* 🌟 로그인 글씨 화이트 강제 지정 */
-        .login-btn-col .stButton > button * {
-            color: #FFFFFF !important;
-            font-size: 10px !important;
+        [data-testid="stFormSubmitButton"] > button p {
+            color: #FFFFFF !important; /* 새하얀 글씨 */
+            font-size: 11px !important;
             font-weight: 700 !important;
             letter-spacing: 1px;
+            margin: 0 !important;
         }
-        .login-btn-col .stButton > button:hover {
-            background-color: #444444 !important;
-            border-color: #666666 !important;
+        [data-testid="stFormSubmitButton"] > button:hover {
+            background-color: #555555 !important;
+            border-color: #888888 !important;
         }
     </style>
     """, unsafe_allow_html=True)
@@ -239,17 +253,13 @@ def check_password():
         # 애니메이션 로고
         st.markdown('<img src="https://dalbitgo.com/images/main_logo.png" class="animated-logo">', unsafe_allow_html=True)
         
-        # 🌟 폼 내부를 쪼개어 가로로 일렬 배치
+        # 🌟 폼 내부 레이아웃 (Streamlit 기본 컬럼을 활용하되 CSS로 억제)
         with st.form("login_form", clear_on_submit=True):
-            st.markdown('<div class="login-form-container">', unsafe_allow_html=True)
-            
-            col_input, col_btn = st.columns([3, 1]) # 입력창(3) : 버튼(1) 비율
-            with col_input:
+            c_in, c_btn = st.columns([2.5, 1]) # 가로 비율 설정
+            with c_in:
                 pwd = st.text_input("auth", type="password", placeholder="인증코드", label_visibility="collapsed")
-            with col_btn:
-                st.markdown('<div class="login-btn-col">', unsafe_allow_html=True)
+            with c_btn:
                 submit = st.form_submit_button("LOGIN")
-                st.markdown('</div>', unsafe_allow_html=True)
                 
             if submit:
                 if pwd == "51015":
@@ -257,8 +267,6 @@ def check_password():
                     st.rerun()
                 elif pwd:
                     st.error("인증 코드가 일치하지 않습니다.")
-                    
-            st.markdown('</div>', unsafe_allow_html=True)
             
         st.markdown("</div>", unsafe_allow_html=True)
         
@@ -316,7 +324,7 @@ full_store_list = load_store_list() or (sorted(df['매장명'].unique().tolist()
 # ==========================================
 st.sidebar.markdown("""
 <style>
-    /* 🌟 [핵심 수정] 완벽한 원형 테마 버튼 CSS */
+    /* 🌟 완벽한 원형 테마 버튼 CSS */
     .circle-theme-btn .stButton > button {
         border-radius: 50% !important;
         width: 40px !important;
