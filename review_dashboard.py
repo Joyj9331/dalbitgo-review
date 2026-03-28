@@ -12,7 +12,20 @@ import urllib.request
 import urllib.parse
 import json
 from datetime import datetime, timedelta
-from dotenv import load_dotenv # 💡 금고 여는 부품 추가
+
+# 💡 [핵심 수술] 로컬(서버PC)과 스트림릿 클라우드 양쪽에서 에러 없이 금고를 열기 위한 하이브리드 로직
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass # 스트림릿 클라우드에서는 dotenv 부품이 없어도 에러 없이 넘어가도록 조치
+
+def get_secret(key_name):
+    # 1. 스트림릿 클라우드 자체 금고(Secrets) 확인
+    if key_name in st.secrets:
+        return st.secrets[key_name]
+    # 2. 로컬 서버PC의 .env 금고 확인
+    return os.getenv(key_name)
 
 # ==========================================
 # 1. 페이지 기본 설정 및 상태 초기화
@@ -21,9 +34,6 @@ st.set_page_config(page_title="달빛에구운고등어 본사 인트라넷", la
 
 if "theme" not in st.session_state:
     st.session_state.theme = "dark"
-
-# 💡 환경 변수 로드
-load_dotenv()
 
 # ==========================================
 # 2. 공통 CSS
@@ -268,11 +278,11 @@ full_store_list = load_store_list() or (sorted(df['매장명'].unique().tolist()
 # ==========================================
 # 6. 네이버 검색광고 API (보안 수술 완료)
 # ==========================================
-# 💡 하드코딩된 위험한 텍스트 키워드를 제거하고 .env 금고에서 꺼내오도록 변경
+# 💡 하드코딩 제거 및 하이브리드 Secret 로더 적용
 NAVER_AD = {
-    "CUSTOMER_ID": os.getenv("NAVER_CUSTOMER_ID"),
-    "ACCESS_LICENSE": os.getenv("NAVER_ACCESS_LICENSE"),
-    "SECRET_KEY": os.getenv("NAVER_SECRET_KEY"),
+    "CUSTOMER_ID": get_secret("NAVER_CUSTOMER_ID"),
+    "ACCESS_LICENSE": get_secret("NAVER_ACCESS_LICENSE"),
+    "SECRET_KEY": get_secret("NAVER_SECRET_KEY"),
 }
 
 def _sign(timestamp, method, path):
@@ -284,7 +294,7 @@ def _sign(timestamp, method, path):
 
 def get_keyword_stats(keywords: list):
     if not NAVER_AD["ACCESS_LICENSE"]:
-        st.error("🚨 서버 .env 파일에 네이버 API 키가 설정되지 않았습니다.")
+        st.error("🚨 환경 변수(Secrets)에 네이버 API 키가 설정되지 않았습니다.")
         return []
         
     path = "/keywordstool"
