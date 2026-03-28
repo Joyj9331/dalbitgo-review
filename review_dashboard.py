@@ -13,7 +13,7 @@ import urllib.parse
 import json
 from datetime import datetime, timedelta
 
-# 💡 [핵심 수술] 로컬(서버PC)과 스트림릿 클라우드 양쪽에서 에러 없이 금고를 열기 위한 하이브리드 로직
+# 💡 [핵심 수술] 로컬(서버PC)과 스트림릿 클라우드 양쪽에서 에러 없이 금고를 열기 위한 완벽 하이브리드 로직
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -21,9 +21,13 @@ except ImportError:
     pass # 스트림릿 클라우드에서는 dotenv 부품이 없어도 에러 없이 넘어가도록 조치
 
 def get_secret(key_name):
-    # 1. 스트림릿 클라우드 자체 금고(Secrets) 확인
-    if key_name in st.secrets:
-        return st.secrets[key_name]
+    try:
+        # 1. 스트림릿 클라우드 자체 금고(Secrets) 확인 (에러 원천 차단)
+        if hasattr(st, "secrets") and key_name in st.secrets:
+            return st.secrets[key_name]
+    except Exception:
+        pass
+    
     # 2. 로컬 서버PC의 .env 금고 확인
     return os.getenv(key_name)
 
@@ -350,7 +354,8 @@ st.sidebar.markdown("""
         onerror="this.onerror=null; this.style.display='none'; this.insertAdjacentHTML('afterend', '<span style=\\'color:#FFFFFF; font-size:15px; font-weight:700;\\'>🐟 달빛에 구운 고등어</span>');">
 </div>
 """, unsafe_allow_html=True)
-st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리</p>", unsafe_allow_html=True)
+# 💡 [핵심 수술] 파일 업데이트 여부를 육안으로 바로 확인할 수 있도록 v2.0 표시 추가
+st.sidebar.markdown("<p style='font-size: 15px; font-weight: 700; text-align: center;'>가맹점 리뷰 통합 관리 (v2.0)</p>", unsafe_allow_html=True)
 st.sidebar.divider()
 
 st.sidebar.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
