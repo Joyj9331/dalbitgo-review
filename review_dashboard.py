@@ -6,9 +6,10 @@ import hashlib
 import re
 from datetime import datetime, timedelta
 
-# 💡 [핵심 버그 해결] 대시보드 실행 시 현재 폴더 절대 경로를 완벽하게 고정
+# 💡 [핵심 버그 해결] 대시보드 실행 시 현재 폴더 경로를 강제로 고정하여 데이터를 못 찾는 현상 방지
 try:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    os.chdir(BASE_DIR)
 except:
     BASE_DIR = os.getcwd()
 
@@ -185,7 +186,10 @@ def add_saved_id(filename, new_id):
         pd.DataFrame({'id': ids}).to_csv(filename, index=False)
 
 def generate_id(row):
-    return hashlib.md5(f"{row['매장명']}_{row['작성일']}_{row['리뷰내용']}".encode()).hexdigest()
+    # 💡 [핵심 버그 해결] 띄어쓰기나 줄바꿈이 섞여 들어오면서 해시값(지문)이 달라지는 현상 원천 차단
+    # 텍스트의 모든 공백을 없애고 딱 30글자만 압착해서 절대 변하지 않는 영구 지문을 생성합니다.
+    safe_text = re.sub(r'\s+', '', str(row['리뷰내용']))[:30]
+    return hashlib.md5(f"{row['매장명']}_{row['작성일']}_{safe_text}".encode('utf-8')).hexdigest()
 
 def load_data():
     filename = os.path.join(BASE_DIR, "가맹점_리뷰수집결과_누적.csv")
@@ -303,7 +307,6 @@ with tab2:
                 
                 st.dataframe(s_df[['작성일', '감정분석', '리뷰내용']].sort_values(by='작성일', ascending=False), use_container_width=True)
 
-# ── 💡 탭 3: 로컬 마케팅 통합 관제 (완벽하게 100% 복원 완료) ─────────────────
 with tab3:
     st.markdown("<h3 style='margin-top: 25px; margin-bottom: 15px;'>로컬 마케팅 통합 관제 (ROI & Ranking)</h3>", unsafe_allow_html=True)
     roi_file = os.path.join(BASE_DIR, "가맹점_키워드_ROI_분석결과.csv")
@@ -383,18 +386,17 @@ with tab3:
                     st.info("해당 매장의 순위 추적 데이터가 존재하지 않습니다.")
                 else:
                     for _, row in store_targets.iterrows():
-                        kw = row['타겟키워드']
+                        kw = str(row['타겟키워드']).replace('\n', ' ').replace('\r', '')
                         rank = row['현재순위']
-                        trend = str(row['등락폭'])
-                        first_name = str(row['1위_매장명'])
-                        first_kws = str(row['1위_사용_키워드'])
-                        ai_insight = str(row['AI_인사이트'])
+                        trend = str(row['등락폭']).replace('\n', ' ').replace('\r', '')
+                        first_name = str(row['1위_매장명']).replace('\n', ' ').replace('\r', '')
+                        first_kws = str(row['1위_사용_키워드']).replace('\n', ' ').replace('\r', '')
+                        ai_insight = str(row['AI_인사이트']).replace('\n', ' ').replace('\r', '')
                         
                         rank_str = "노출 실패 (허수 키워드)" if rank >= 999 else f"{int(rank)}위"
                         trend_display = f"({trend})" if trend != "-" else ""
                         
                         with st.expander(f"검색 타겟: [{kw}] ➡️ 상태: {rank_str} {trend_display}", expanded=(rank > 1)):
-                            # 들여쓰기를 제거하여 코드로 렌더링되지 않게 방어
                             expander_html1 = f"<div class='report-container'><div class='report-header'>[진단 개요]</div><div class='report-section'><span class='report-label'>현재 노출 상태:</span><span class='report-value {'warning-text' if rank >= 999 else 'success-text'}'>{rank_str} {trend_display}</span></div></div>"
                             st.markdown(expander_html1, unsafe_allow_html=True)
                             
@@ -420,7 +422,6 @@ with tab3:
     else:
         st.info("데이터 파일이 부족합니다. 백엔드에서 ROI 분석기 및 순위 추적 봇을 실행해 주십시오.")
 
-# ── 💡 탭 4: 경쟁사 메뉴/가격 모니터링 (HTML 노출 버그 완벽 차단) ─────────────────
 with tab4:
     st.markdown("<h3 style='margin-top: 25px; margin-bottom: 15px;'>경쟁 브랜드 전력 비교 모니터링 (4대 핵심 타겟)</h3>", unsafe_allow_html=True)
     
@@ -504,7 +505,6 @@ with tab4:
                                 else:
                                     trend_html = f"<div class='trend-flat'>변동 없음 (어제와 동일)</div>"
 
-                        # 💡 [버그 해결] 마크다운에서 코드 블록으로 인식하지 않도록 HTML을 들여쓰기 없이 한 줄로 연결
                         kpi_html = f"<div class='brand-kpi-box'><div class='brand-kpi-name'>{brand_name}</div><div class='brand-kpi-price' style='font-size: 34px;'>{rep_price_latest}</div><div class='brand-kpi-desc'>대표 고등어구이 가격</div>{trend_html}</div>"
                         st.markdown(kpi_html, unsafe_allow_html=True)
                         
@@ -527,13 +527,11 @@ with tab4:
                                 m_price = m.split(':')[-1].strip() if ':' in m else ""
                                 
                                 h_class = "highlight" if "고등어" in m else ""
-                                # 들여쓰기 없는 한 줄 연결
                                 menu_html += f"<li class='comp-menu-item {h_class}'><span class='menu-name-text' title='{m_name}'>{m_name}</span><span style='font-weight: 500; white-space: nowrap; margin-left: 10px;'>{m_price}</span></li>"
                             
                             if not menu_html:
                                 menu_html = "<li class='comp-menu-item' style='color:#666;'>수집된 메뉴가 없습니다.</li>"
                                 
-                            # 💡 [버그 해결] 전체 카드의 HTML 코드도 들여쓰기 없이 한 줄로 쭉 이어붙여 렌더링 강제
                             card_html = f"<div class='comp-card'><div class='comp-card-title'>{store_name} {bansang_badge}</div><div style='margin-bottom: 15px;'><span class='comp-kpi-label'>대표 고등어구이</span><span class='comp-kpi-value' style='font-size:22px;'>{card_rep_price}</span></div><ul class='comp-menu-list'>{menu_html}</ul><div style='margin-top: 15px; border-top: 1px dashed #333; padding-top: 12px;'><span class='comp-kpi-label'>사용 중인 타겟 키워드</span><span class='comp-keyword-value'>{keyword_status}</span></div></div>"
                             st.markdown(card_html, unsafe_allow_html=True)
                             
